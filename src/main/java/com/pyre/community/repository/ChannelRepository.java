@@ -10,7 +10,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ChannelRepository extends JpaRepository<Channel, Long> {
-    Page<Channel> findAllByGenreAndApprovalStatus(String Genre, ApprovalStatus approvalStatus, Pageable pageable);
+    Page<Channel> findAllByGenreAndApprovalStatusAndTitleStartingWith(String Genre, ApprovalStatus approvalStatus, String title, Pageable pageable);
     Page<Channel> findAll(Pageable pageable);
     Page<Channel> findAllByApprovalStatus(ApprovalStatus approvalStatus, Pageable pageable);
+    Page<Channel> findAllByApprovalStatusAndTitleStartingWith(ApprovalStatus approvalStatus, String title, Pageable pageable);
 }

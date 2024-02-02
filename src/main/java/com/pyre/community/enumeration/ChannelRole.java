@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ChannelRole {
     CHANNEL_ADMIN("CHANNEL_ADMIN"),
-    CHANNEL_USER("CHANNEL_USER"),
-    CHANNEL_GUEST("CHANNEL_GUEST");
+    CHANNEL_USER("CHANNEL_USER");
 
     private final String key;
 }

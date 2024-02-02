@@ -4,10 +4,8 @@ import com.pyre.community.enumeration.ApprovalStatus;
 import com.pyre.community.enumeration.ChannelGenre;
 import com.pyre.community.enumeration.ChannelType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Pattern;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,16 +13,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Data
+@Getter
 @Entity
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Channel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CHANNEL_ID")
     private long id;
+
     private String title;
     private String description;
     @Enumerated(EnumType.STRING)
@@ -41,37 +38,61 @@ public class Channel {
     @Enumerated(EnumType.STRING)
     private ApprovalStatus approvalStatus;
 
-    public static Channel createChannel(
+    public void updateTitle(String title) {
+        this.title = title;
+        this.mAt = LocalDateTime.now();
+    }
+    public void updateDescription(String description) {
+        this.description = description;
+        this.mAt = LocalDateTime.now();
+    }
+    public void updateGenre(ChannelGenre genre) {
+        this.genre = genre;
+        this.mAt = LocalDateTime.now();
+    }
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+        this.mAt = LocalDateTime.now();
+    }
+    public void updateApprovalStatus(ApprovalStatus approvalStatus) {
+        this.approvalStatus = approvalStatus;
+        this.mAt = LocalDateTime.now();
+    }
+
+    public void updateChannel(
             String title,
             String description,
             ChannelGenre genre,
             String imageUrl
     ) {
-        Channel channel = new Channel();
-        channel.setTitle(title);
-        channel.setDescription(description);
-        channel.setGenre(genre);
-        channel.setImageUrl(imageUrl);
-        channel.setRating(0.0f);
-        channel.setEndUsers(new HashSet<>());
-        channel.setRooms(new ArrayList<>());
-        channel.setType(ChannelType.CHANNEL_PUBLIC);
-        channel.setCAt(LocalDateTime.now());
-        channel.setApprovalStatus(ApprovalStatus.CHECKING);
-        return channel;
+        this.title = title;
+        this.description = description;
+        this.genre = genre;
+        this.imageUrl = imageUrl;
+        this.mAt = LocalDateTime.now();
     }
-    public static Channel updateChannel(
+    public int getMemberCounts() {
+        return this.endUsers.size();
+    }
+    public int getRoomCounts() {
+        return this.rooms.size();
+    }
+    @Builder
+    public Channel(
             String title,
             String description,
             ChannelGenre genre,
-            String imageUrl,
-            Channel channel
+            String imageUrl
     ) {
-        channel.setTitle(title);
-        channel.setDescription(description);
-        channel.setGenre(genre);
-        channel.setImageUrl(imageUrl);
-        channel.setMAt(LocalDateTime.now());
-        return channel;
+        this.title = title;
+        this.description = description;
+        this.genre = genre;
+        this.imageUrl = imageUrl;
+        this.rating = 0.0f;
+        this.endUsers = new HashSet<>();
+        this.rooms = new ArrayList<>();
+        this.type = ChannelType.CHANNEL_PUBLIC;
+        this.cAt = LocalDateTime.now();
+        this.approvalStatus = ApprovalStatus.CHECKING;
     }
 }

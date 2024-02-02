@@ -17,6 +17,20 @@ public record ChannelGetViewDto(
     long roomCounts,
     String cAt
 ) {
+    public static ChannelGetViewDto fromEntity(Channel channel) {
+        ChannelGetViewDto dto = new ChannelGetViewDto(
+                channel.getId(),
+                channel.getTitle(),
+                channel.getDescription(),
+                channel.getGenre(),
+                channel.getImageUrl(),
+                channel.getRating(),
+                channel.getEndUsers().size(),
+                channel.getRooms().size(),
+                localDateToString(channel.getCAt())
+        );
+                return dto;
+    }
     public static ChannelGetViewDto createChannelGetViewDto(Channel channel) {
         ChannelGetViewDto channelGetViewDto = new ChannelGetViewDto(
                 channel.getId(),

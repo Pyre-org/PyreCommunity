@@ -1,13 +1,8 @@
 package com.pyre.community.service;
 
 
-import com.pyre.community.dto.request.ChannelCreateDto;
-import com.pyre.community.dto.request.ChannelEditDto;
-import com.pyre.community.dto.request.ChannelUpdateApprovalStatusDto;
-import com.pyre.community.dto.response.ChannelCreateViewDto;
-import com.pyre.community.dto.response.ChannelGetAllViewDto;
-import com.pyre.community.dto.response.ChannelGetGenresResponseDto;
-import com.pyre.community.dto.response.ChannelGetViewDto;
+import com.pyre.community.dto.request.*;
+import com.pyre.community.dto.response.*;
 import org.springframework.transaction.annotation.Transactional;
 
 
@@ -17,11 +12,24 @@ public interface ChannelService {
     @Transactional
     ChannelGetViewDto getChannel(long id);
     @Transactional
+    ChannelGetAllViewDto getAllChannelByUser(
+            long userId, String token
+    );
+    @Transactional
+    ChannelGetAllViewDto getAllChannelByUserAndSearch(
+            long userId, String token,
+            String genre,
+            String sortBy,
+            String keyword,
+            Boolean orderByDesc
+    );
+    @Transactional
     ChannelGetAllViewDto getAllChannel(
             int page,
             int count,
             String genre,
             String sortBy,
+            String keyword,
             Boolean orderByDesc
     );
     @Transactional
@@ -32,5 +40,16 @@ public interface ChannelService {
     ChannelGetAllViewDto viewWaitApprovalChannel(String accessToken, int page, int count);
     @Transactional
     ChannelGetGenresResponseDto getGenres(String name);
+    @Transactional
+    ChannelJoinResponse joinChannel(long userId, String accessToken, ChannelJoinRequest request);
+    @Transactional
+    void locateChannel(long userId, String accessToken, ChannelLocateRequest request);
+    @Transactional
+    void deleteChannel(long userId, long channelId, String token);
+
+    @Transactional
+    void leaveChannel(long userId, long channelId);
+    @Transactional
+    void banMember(long userId, long channelId, long targetId);
 }
 
