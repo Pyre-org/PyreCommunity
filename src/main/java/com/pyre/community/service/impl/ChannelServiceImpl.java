@@ -42,7 +42,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     @Transactional
-    public ChannelCreateViewDto createChannel(ChannelCreateDto channelCreateDto, long id) {
+    public ChannelCreateViewDto createChannel(ChannelCreateDto channelCreateDto, UUID id) {
         ChannelGenre genre = channelCreateDto.genre();
         if (channelCreateDto.genre() == null) {
             genre = ChannelGenre.GENERAL;
@@ -60,7 +60,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
     @Override
     @Transactional
-    public ChannelGetViewDto getChannel(long id) {
+    public ChannelGetViewDto getChannel(UUID id) {
         Optional<Channel> channel = this.channelRepository.findById(id);
         if (!channel.isPresent()) {
             throw new DataNotFoundException("해당 아이디를 가진 채널을 찾을 수 없습니다.");
@@ -72,7 +72,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Transactional
     @Override
     public ChannelGetAllViewDto getAllChannelByUser(
-            long userId, String token
+            UUID userId, String token
     ) {
 
         List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId, Sort.by(Sort.Direction.ASC, "indexing"));
@@ -93,7 +93,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Transactional
     @Override
     public ChannelGetAllViewDto getAllChannelByUserAndSearch(
-            long userId, String token,
+            UUID userId, String token,
             String genre,
             String sortBy,
             String keyword,
@@ -190,7 +190,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
     @Override
     @Transactional
-    public String updateChannelApprovalStatus(String accessToken, long channelId, ChannelUpdateApprovalStatusDto allow) {
+    public String updateChannelApprovalStatus(String accessToken, UUID channelId, ChannelUpdateApprovalStatusDto allow) {
         if (allow == null) {
             throw new RuntimeException("해당 요청은 바디가 필수입니다.");
         }
@@ -219,7 +219,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     @Transactional
-    public ChannelGetViewDto editChannel(String accessToken, long channelId, ChannelEditDto channelEditDto) {
+    public ChannelGetViewDto editChannel(String accessToken, UUID channelId, ChannelEditDto channelEditDto) {
         UserInfoFeignResponse userInfo = this.userClient.getUserInfo(accessToken);
         Optional<Channel> channel = this.channelRepository.findById(channelId);
         if (userInfo == null) {
@@ -283,7 +283,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
     @Transactional
     @Override
-    public ChannelJoinResponse joinChannel(long userId, String accessToken, ChannelJoinRequest request) {
+    public ChannelJoinResponse joinChannel(UUID userId, String accessToken, ChannelJoinRequest request) {
         if (!request.agreement()) {
             throw new CustomException("필수 동의 사항에 동의를 해야 채널에 가입할 수 있습니다.");
         }
@@ -298,7 +298,7 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channel.get().getApprovalStatus().equals(ApprovalStatus.ALLOW)) {
             throw new CustomException("해당 채널은 승인되지 않은 채널입니다.");
         }
-        int indexing = (!channelEndUsers.isEmpty()) ? channelEndUsers.getLast().getIndexing() + 1 : 0;
+        int indexing = (!channelEndUsers.isEmpty()) ? channelEndUsers.get(0).getIndexing() + 1 : 0;
         Channel gotChannel = channel.get();
 
         ChannelEndUser channelEndUser = ChannelEndUser.builder()
@@ -313,7 +313,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
     @Transactional
     @Override
-    public void locateChannel(long userId, String accessToken, ChannelLocateRequest request) {
+    public void locateChannel(UUID userId, String accessToken, ChannelLocateRequest request) {
         List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId, Sort.by(Sort.Direction.ASC, "indexing"));
         Optional<Channel> channel = this.channelRepository.findById(request.channelId());
         if (!channel.isPresent()) {
@@ -353,7 +353,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
     @Transactional
     @Override
-    public void deleteChannel(long userId, long channelId, String token) {
+    public void deleteChannel(UUID userId, UUID channelId, String token) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
 
         if (!channel.isPresent()) {
@@ -372,7 +372,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
     @Transactional
     @Override
-    public void leaveChannel(long userId, long channelId) {
+    public void leaveChannel(UUID userId, UUID channelId) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
         if (!channel.isPresent()) {
             throw new DataNotFoundException("해당 채널은 존재하지 않습니다.");
@@ -392,7 +392,7 @@ public class ChannelServiceImpl implements ChannelService {
     }
     @Transactional
     @Override
-    public void banMember(long userId, long channelId, long targetId) {
+    public void banMember(UUID userId, UUID channelId, UUID targetId) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
         if (!channel.isPresent()) {
             throw new DataNotFoundException("해당 채널은 존재하지 않습니다.");

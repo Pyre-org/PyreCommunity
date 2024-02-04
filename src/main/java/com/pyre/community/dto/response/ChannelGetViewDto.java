@@ -5,9 +5,10 @@ import com.pyre.community.enumeration.ChannelGenre;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 public record ChannelGetViewDto(
-    long id,
+    UUID id,
     String title,
     String description,
     ChannelGenre genre,

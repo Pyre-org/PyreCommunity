@@ -4,18 +4,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pyre.community.enumeration.ChannelRole;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 
 @Getter
 @Entity
 @NoArgsConstructor
 public class ChannelEndUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "CHANNEL_ENDUSER_ID")
-    private long id;
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @Column(name = "CHANNEL_ENDUSER_ID", columnDefinition = "BINARY(16)")
+    private UUID id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     @ToString.Exclude
@@ -23,7 +26,7 @@ public class ChannelEndUser {
     private Channel channel;
 
     @Column(name = "USER_ID")
-    private Long userId;
+    private UUID userId;
 
     private ChannelRole role;
 
@@ -34,7 +37,7 @@ public class ChannelEndUser {
     @Builder
     public ChannelEndUser(
             Channel channel,
-            Long userId,
+            UUID userId,
             Boolean agreement,
             int indexing
     ) {

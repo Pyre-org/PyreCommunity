@@ -11,12 +11,13 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ChannelEndUserRepository extends JpaRepository<ChannelEndUser, Long> {
-    Boolean existsByChannelAndUserId(Channel channel, Long userId);
-    Optional<ChannelEndUser> findByChannelAndUserId(Channel channel, Long userId);
-    List<ChannelEndUser> findAllByUserId(Long userId, Sort sort);
-    List<ChannelEndUser> findAllByUserId(Long userId);
-    List<ChannelEndUser> findTop1ByUserIdOrderByIndexingDesc(Long userId);
+public interface ChannelEndUserRepository extends JpaRepository<ChannelEndUser, UUID> {
+    Boolean existsByChannelAndUserId(Channel channel, UUID userId);
+    Optional<ChannelEndUser> findByChannelAndUserId(Channel channel, UUID userId);
+    List<ChannelEndUser> findAllByUserId(UUID userId, Sort sort);
+    List<ChannelEndUser> findAllByUserId(UUID userId);
+    List<ChannelEndUser> findTop1ByUserIdOrderByIndexingDesc(UUID userId);
 }

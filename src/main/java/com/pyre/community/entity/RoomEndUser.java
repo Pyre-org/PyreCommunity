@@ -4,17 +4,20 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pyre.community.enumeration.RoomRole;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
-@Data
+import java.util.UUID;
+
+
+@Getter
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RoomEndUser {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ROOM_ENDUSER_ID")
-    private long id;
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @Column(name = "ROOM_ENDUSER_ID", columnDefinition = "BINARY(16)")
+    private UUID id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     @ToString.Exclude

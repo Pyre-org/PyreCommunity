@@ -1,7 +1,9 @@
 package com.pyre.community.dto.request;
 
+import java.util.UUID;
+
 public record ChannelJoinRequest(
-        long channelId,
+        UUID channelId,
         Boolean agreement
 ) {
 }

@@ -5,19 +5,21 @@ import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 
 public interface ChannelService {
     @Transactional
-    ChannelCreateViewDto createChannel(ChannelCreateDto channelCreateDto, long userId);
+    ChannelCreateViewDto createChannel(ChannelCreateDto channelCreateDto, UUID userId);
     @Transactional
-    ChannelGetViewDto getChannel(long id);
+    ChannelGetViewDto getChannel(UUID id);
     @Transactional
     ChannelGetAllViewDto getAllChannelByUser(
-            long userId, String token
+            UUID userId, String token
     );
     @Transactional
     ChannelGetAllViewDto getAllChannelByUserAndSearch(
-            long userId, String token,
+            UUID userId, String token,
             String genre,
             String sortBy,
             String keyword,
@@ -33,23 +35,23 @@ public interface ChannelService {
             Boolean orderByDesc
     );
     @Transactional
-    String updateChannelApprovalStatus(String accessToken, long channelId, ChannelUpdateApprovalStatusDto allow);
+    String updateChannelApprovalStatus(String accessToken, UUID channelId, ChannelUpdateApprovalStatusDto allow);
     @Transactional
-    ChannelGetViewDto editChannel(String accessToken, long channelId, ChannelEditDto channelEditDto);
+    ChannelGetViewDto editChannel(String accessToken, UUID channelId, ChannelEditDto channelEditDto);
     @Transactional
     ChannelGetAllViewDto viewWaitApprovalChannel(String accessToken, int page, int count);
     @Transactional
     ChannelGetGenresResponseDto getGenres(String name);
     @Transactional
-    ChannelJoinResponse joinChannel(long userId, String accessToken, ChannelJoinRequest request);
+    ChannelJoinResponse joinChannel(UUID userId, String accessToken, ChannelJoinRequest request);
     @Transactional
-    void locateChannel(long userId, String accessToken, ChannelLocateRequest request);
+    void locateChannel(UUID userId, String accessToken, ChannelLocateRequest request);
     @Transactional
-    void deleteChannel(long userId, long channelId, String token);
+    void deleteChannel(UUID userId, UUID channelId, String token);
 
     @Transactional
-    void leaveChannel(long userId, long channelId);
+    void leaveChannel(UUID userId, UUID channelId);
     @Transactional
-    void banMember(long userId, long channelId, long targetId);
+    void banMember(UUID userId, UUID channelId, UUID targetId);
 }
 

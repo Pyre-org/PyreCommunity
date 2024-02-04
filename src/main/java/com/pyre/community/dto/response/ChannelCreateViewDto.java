@@ -2,8 +2,10 @@ package com.pyre.community.dto.response;
 
 import com.pyre.community.entity.Channel;
 
+import java.util.UUID;
+
 public record ChannelCreateViewDto(
-        long id,
+        UUID id,
         String title
 ) {
     public static ChannelCreateViewDto makeDto(Channel channel) {

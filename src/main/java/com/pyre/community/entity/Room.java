@@ -5,20 +5,21 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pyre.community.enumeration.RoomType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
-@Data
+@Getter
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Room {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ROOM_ID")
-    private long id;
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @Column(name = "ROOM_ID", columnDefinition = "BINARY(16)")
+    private UUID id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     @ToString.Exclude
