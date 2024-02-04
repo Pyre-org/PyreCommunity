@@ -11,6 +11,4 @@ public interface UserClient {
     String AUTHORIZATION = "Authorization";
     @GetMapping("/info")
     UserInfoFeignResponse getUserInfo(@RequestHeader(AUTHORIZATION) String token);
-
-
 }
