@@ -25,9 +25,21 @@ public class RoomEndUser {
     private Room room;
 
     @Column(name = "USER_ID")
-    private Long userId;
+    private UUID userId;
 
     private RoomRole role;
     private Boolean owner;
+    @Builder
+    public RoomEndUser(
+            Room room,
+            UUID userId,
+            RoomRole role,
+            Boolean owner
+    ) {
+        this.room = room;
+        this.userId = userId;
+        this.role = role;
+        this.owner = owner;
+    }
 
 }

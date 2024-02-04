@@ -201,7 +201,13 @@ public class GlobalExceptionHandler {
         // It's a good practice to send generic error messages in such cases
         final ErrorResponse response = ErrorResponse.of(ErrorCode.BAD_REQUEST_ERROR, ex.getMessage());
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 401 Unauthorized
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(PermissionDenyException.class)
+    public ResponseEntity<Object> handelPermissionDenyException(PermissionDenyException ex) {
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.BAD_REQUEST_ERROR, ex.getMessage());
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(CustomException.class)
@@ -209,7 +215,7 @@ public class GlobalExceptionHandler {
         // It's a good practice to send generic error messages in such cases
         final ErrorResponse response = ErrorResponse.of(ErrorCode.BAD_REQUEST_ERROR, ex.getMessage());
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // 401 Unauthorized
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
     // ==================================================================================================================
 

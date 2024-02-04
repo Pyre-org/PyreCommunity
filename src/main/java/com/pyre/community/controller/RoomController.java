@@ -2,6 +2,7 @@ package com.pyre.community.controller;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
 import com.pyre.community.dto.response.RoomCreateResponse;
+import com.pyre.community.dto.response.RoomGetResponse;
 import com.pyre.community.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,5 +32,13 @@ public class RoomController {
             @RequestHeader("id") String token
     ) {
         return new ResponseEntity<>(this.roomService.createRoom(UUID.fromString(token), roomCreateRequest), HttpStatus.OK);
+    }
+    @GetMapping("/get/{id}")
+    @Operation(description = "룸 정보 가져오기")
+    public ResponseEntity<RoomGetResponse> getRoom(
+            @PathVariable String id,
+            @RequestHeader("id") String userId
+    ) {
+        return new ResponseEntity<>(this.roomService.getRoom(UUID.fromString(id), UUID.fromString(userId)), HttpStatus.OK);
     }
 }

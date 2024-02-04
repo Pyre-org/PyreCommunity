@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface RoomEndUserRepository extends JpaRepository<RoomEndUser, UUID> {
+    Boolean existsByIdAndAndUserId(UUID id, UUID userId);
 }

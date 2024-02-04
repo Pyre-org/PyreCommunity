@@ -2,19 +2,21 @@ package com.pyre.community.service.impl;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
 import com.pyre.community.dto.response.RoomCreateResponse;
-import com.pyre.community.entity.Channel;
-import com.pyre.community.entity.ChannelEndUser;
-import com.pyre.community.entity.Room;
-import com.pyre.community.entity.Space;
+import com.pyre.community.dto.response.RoomGetResponse;
+import com.pyre.community.entity.*;
+import com.pyre.community.enumeration.RoomRole;
+import com.pyre.community.enumeration.RoomType;
 import com.pyre.community.enumeration.SpaceRole;
 import com.pyre.community.enumeration.SpaceType;
 import com.pyre.community.exception.customexception.CustomException;
 import com.pyre.community.exception.customexception.DataNotFoundException;
+import com.pyre.community.exception.customexception.PermissionDenyException;
 import com.pyre.community.repository.*;
 import com.pyre.community.service.RoomService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.websocket.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -44,11 +46,35 @@ public class RoomServiceImpl implements RoomService {
         if (channelEndUser.get().getBan().equals(true)) {
             throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
         }
-        Room savedRoom = createRoomAndSpace(roomCreateRequest, gotChannel);
+        Room savedRoom = createRoomAndSpace(roomCreateRequest, gotChannel, userId);
         RoomCreateResponse roomCreateResponse = RoomCreateResponse.makeDto(savedRoom);
         return roomCreateResponse;
     }
-    private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel) {
+    @Transactional
+    @Override
+    public RoomGetResponse getRoom(UUID id, UUID userId) {
+        Optional<Room> room = this.roomRepository.findById(id);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸 입니다.");
+        }
+        Room gotRoom = room.get();
+        if (
+                gotRoom.getType().equals(RoomType.ROOM_PUBLIC) ||
+                        gotRoom.getType().equals(RoomType.ROOM_OPEN) ||
+                        gotRoom.getType().equals(RoomType.ROOM_CAPTURE) ||
+                        gotRoom.getType().equals(RoomType.ROOM_GLOBAL)
+        ) {
+            RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
+            return roomGetResponse;
+        } else {
+            if (!this.roomEndUserRepository.existsByIdAndAndUserId(id, userId)) {
+                throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
+            }
+            RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
+            return roomGetResponse;
+        }
+    }
+    private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {
         Room room = Room.builder()
                 .title(roomCreateRequest.title())
                 .description(roomCreateRequest.description())
@@ -57,6 +83,13 @@ public class RoomServiceImpl implements RoomService {
                 .type(roomCreateRequest.type())
                 .build();
         Room savedRoom = this.roomRepository.save(room);
+        RoomEndUser roomEndUser = RoomEndUser.builder()
+                .userId(userId)
+                .room(room)
+                .owner(true)
+                .role(RoomRole.ROOM_ADMIN)
+                .build();
+        this.roomEndUserRepository.save(roomEndUser);
         Space feed = Space.builder()
                 .room(savedRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
