@@ -44,11 +44,16 @@ public class RoomServiceImpl implements RoomService {
         if (channelEndUser.get().getBan().equals(true)) {
             throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
         }
+        Room savedRoom = createRoomAndSpace(roomCreateRequest, gotChannel);
+        RoomCreateResponse roomCreateResponse = RoomCreateResponse.makeDto(savedRoom);
+        return roomCreateResponse;
+    }
+    private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel) {
         Room room = Room.builder()
                 .title(roomCreateRequest.title())
                 .description(roomCreateRequest.description())
                 .imageUrl(roomCreateRequest.imageUrl())
-                .channel(gotChannel)
+                .channel(channel)
                 .type(roomCreateRequest.type())
                 .build();
         Room savedRoom = this.roomRepository.save(room);
@@ -64,8 +69,7 @@ public class RoomServiceImpl implements RoomService {
                 .type(SpaceType.SPACE_CHAT)
                 .build();
         this.spaceRepository.save(chat);
-        RoomCreateResponse roomCreateResponse = RoomCreateResponse.makeDto(savedRoom);
-        return roomCreateResponse;
+        return savedRoom;
     }
 
 }

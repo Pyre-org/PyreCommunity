@@ -6,14 +6,16 @@ import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.entity.Channel;
 import com.pyre.community.entity.ChannelEndUser;
-import com.pyre.community.enumeration.ApprovalStatus;
-import com.pyre.community.enumeration.ChannelGenre;
-import com.pyre.community.enumeration.ChannelRole;
+import com.pyre.community.entity.Room;
+import com.pyre.community.entity.Space;
+import com.pyre.community.enumeration.*;
 import com.pyre.community.exception.customexception.AuthenticationFailException;
 import com.pyre.community.exception.customexception.CustomException;
 import com.pyre.community.exception.customexception.DataNotFoundException;
 import com.pyre.community.repository.ChannelEndUserRepository;
 import com.pyre.community.repository.ChannelRepository;
+import com.pyre.community.repository.RoomRepository;
+import com.pyre.community.repository.SpaceRepository;
 import com.pyre.community.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +40,9 @@ public class ChannelServiceImpl implements ChannelService {
 
     private final ChannelRepository channelRepository;
     private final ChannelEndUserRepository channelEndUserRepository;
+    private final SpaceRepository spaceRepository;
     private final UserClient userClient;
-
+    private final RoomRepository roomRepository;
     @Override
     @Transactional
     public ChannelCreateViewDto createChannel(ChannelCreateDto channelCreateDto, UUID id) {
@@ -53,8 +56,9 @@ public class ChannelServiceImpl implements ChannelService {
                 .genre(genre)
                 .imageUrl(channelCreateDto.imageUrl())
                 .build();
-
         Channel savedChannel = this.channelRepository.save(channel);
+        createDefaultRoomAndSpace(savedChannel);
+
         ChannelCreateViewDto channelCreateViewDto = ChannelCreateViewDto.makeDto(savedChannel);
         return channelCreateViewDto;
     }
@@ -425,5 +429,41 @@ public class ChannelServiceImpl implements ChannelService {
         String dateString = localDateTime.format(DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm"));
 
         return dateString;
+    }
+    private void createDefaultRoomAndSpace(Channel channel) {
+        Room globalRoom = Room.builder()
+                .channel(channel)
+                .type(RoomType.ROOM_GLOBAL)
+                .title("공용")
+                .description("채널 공용 방")
+                .imageUrl(null) // 이미지 추후 추가
+                .build();
+        this.roomRepository.save(globalRoom);
+        Room captureRoom = Room.builder()
+                .channel(channel)
+                .type(RoomType.ROOM_CAPTURE)
+                .title("방금 캡처 됨")
+                .description("채널 캡처 방")
+                .imageUrl(null) // 이미지 추후 추가
+                .build();
+        this.roomRepository.save(captureRoom);
+        Space globalFeed = Space.builder()
+                .room(globalRoom)
+                .role(SpaceRole.SPACEROLE_GUEST)
+                .type(SpaceType.SPACE_FEED)
+                .build();
+        this.spaceRepository.save(globalFeed);
+        Space globalChat = Space.builder()
+                .room(globalRoom)
+                .role(SpaceRole.SPACEROLE_GUEST)
+                .type(SpaceType.SPACE_CHAT)
+                .build();
+        this.spaceRepository.save(globalChat);
+        Space feed = Space.builder()
+                .room(captureRoom)
+                .role(SpaceRole.SPACEROLE_GUEST)
+                .type(SpaceType.SPACE_FEED)
+                .build();
+        this.spaceRepository.save(feed);
     }
 }
