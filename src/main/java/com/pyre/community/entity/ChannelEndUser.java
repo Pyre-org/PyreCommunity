@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Getter
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChannelEndUser {
     @Id
     @GeneratedValue(generator = "uuid2")

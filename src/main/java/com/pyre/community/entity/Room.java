@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,8 +34,27 @@ public class Room {
     private RoomType type;
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
     private List<RoomEndUser> users;
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
+    private List<Space> spaces;
     private LocalDateTime cAt;
     private LocalDateTime mAt;
 
+    @Builder
+    public Room(
+            String title,
+            String description,
+            String imageUrl,
+            Channel channel,
+            RoomType type
+    ) {
+        this.title = title;
+        this.description = description;
+        this.imageUrl = imageUrl;
+        this.type = type;
+        this.channel = channel;
+        this.users = new ArrayList<>();
+        this.spaces = new ArrayList<>();
+        this.cAt = LocalDateTime.now();
+    }
 
 }

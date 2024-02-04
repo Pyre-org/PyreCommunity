@@ -382,7 +382,6 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelEndUser.isPresent()) {
             throw new DataNotFoundException("해당 채널이 없거나 해당 채널에 가입하지 않았습니다.");
         }
-        log.error("{}",userId);
         if (channelEndUser.get().getBan().equals(true)) {
             throw new CustomException("차단 당한 채널은 탈퇴할 수 없습니다.");
         }
