@@ -36,7 +36,8 @@ public class Channel {
     private LocalDateTime mAt;
     @Enumerated(EnumType.STRING)
     private ApprovalStatus approvalStatus;
-
+    @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL)
+    private List<RoomEndUser> roomEndUsers;
     public void updateTitle(String title) {
         this.title = title;
         this.mAt = LocalDateTime.now();
@@ -93,5 +94,6 @@ public class Channel {
         this.type = ChannelType.CHANNEL_PUBLIC;
         this.cAt = LocalDateTime.now();
         this.approvalStatus = ApprovalStatus.CHECKING;
+        this.roomEndUsers = new ArrayList<>();
     }
 }

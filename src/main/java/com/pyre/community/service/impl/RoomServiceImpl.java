@@ -3,6 +3,8 @@ package com.pyre.community.service.impl;
 import com.pyre.community.dto.request.RoomCreateRequest;
 import com.pyre.community.dto.response.RoomCreateResponse;
 import com.pyre.community.dto.response.RoomGetResponse;
+import com.pyre.community.dto.response.RoomJoinResponse;
+import com.pyre.community.dto.response.RoomListByChannelResponse;
 import com.pyre.community.entity.*;
 import com.pyre.community.enumeration.RoomRole;
 import com.pyre.community.enumeration.RoomType;
@@ -16,11 +18,11 @@ import com.pyre.community.service.RoomService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.enums.Enum;
 import org.apache.tomcat.websocket.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -74,6 +76,100 @@ public class RoomServiceImpl implements RoomService {
             return roomGetResponse;
         }
     }
+    @Transactional
+    @Override
+    public RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type) {
+        Optional<Channel> channel = this.channelRepository.findById(channelId);
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+        }
+        if (!type.equals("ROOM_PUBLIC") && !type.equals("ROOM_OPEN")) {
+            keyword = "ROOM_PUBLIC";
+        }
+        List<Room> rooms = this.roomRepository.findAllByChannelAndTypeAndTitleStartingWithOrderByTitle(channel.get(), RoomType.valueOf(type), keyword);
+        return RoomListByChannelResponse.makeDto(rooms);
+    }
+    @Transactional
+    @Override
+    public RoomListByChannelResponse listByChannelAndKeywordAndUserId(UUID channelId, String keyword, UUID userId) {
+        Optional<Channel> channel = this.channelRepository.findById(channelId);
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+        }
+        if (!this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
+            throw new DataNotFoundException("해당 채널에 가입하지 않았습니다.");
+        }
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserId(channel.get(), userId);
+        List<Room> rooms = new ArrayList<>();
+        for (RoomEndUser r : roomEndUsers) {
+            if (!r.getRoom().getType().equals(RoomType.ROOM_GLOBAL) && r.getRoom().getType().equals(RoomType.ROOM_CAPTURE)) {
+                rooms.add(r.getRoom());
+            }
+        }
+        List<Room> sortedRoom = rooms.stream().sorted(Comparator.comparing(Room::getTitle)).toList();
+        return RoomListByChannelResponse.makeDto(sortedRoom);
+    }
+    @Transactional
+    @Override
+    public RoomListByChannelResponse listByChannelAndUserIdByIndexing(UUID channelId, UUID userId) {
+        Optional<Channel> channel = this.channelRepository.findById(channelId);
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+        }
+        if (!this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
+            throw new DataNotFoundException("해당 채널에 가입하지 않았습니다.");
+        }
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserIdOrderByIndexingAsc(channel.get(), userId);
+        List<Room> rooms = new ArrayList<>();
+        for (RoomEndUser r : roomEndUsers) {
+            rooms.add(r.getRoom());
+        }
+
+        return RoomListByChannelResponse.makeDto(rooms);
+    }
+    @Transactional
+    @Override
+    public RoomJoinResponse joinRoom(UUID roomId, UUID userId, UUID channelId) {
+        Optional<Channel> channel = this.channelRepository.findById(channelId);
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+        }
+        if (!this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
+            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+        }
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Room gotRoom = room.get();
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findTop1ByUserIdOrderByIndexingDesc(userId);
+        RoomEndUser savedRoomEndUser;
+        if (gotRoom.getType().equals(RoomType.ROOM_PUBLIC)) {
+            RoomEndUser roomEndUser = RoomEndUser.builder()
+                    .userId(userId)
+                    .room(gotRoom)
+                    .owner(false)
+                    .indexing(roomEndUsers.get(0).getIndexing() + 1)
+                    .role(RoomRole.ROOM_GUEST)
+                    .build();
+            savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
+        } else if (!gotRoom.getType().equals(RoomType.ROOM_OPEN)) {
+            throw new PermissionDenyException("해당 룸은 초대장을 통해서 가입할 수 있습니다.");
+        } else {
+            RoomEndUser roomEndUser = RoomEndUser.builder()
+                    .userId(userId)
+                    .room(gotRoom)
+                    .owner(false)
+                    .indexing(roomEndUsers.get(0).getIndexing() + 1)
+                    .role(RoomRole.ROOM_USER)
+                    .build();
+            savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
+        }
+        RoomJoinResponse roomJoinResponse = RoomJoinResponse.makeDto(savedRoomEndUser);
+
+        return roomJoinResponse;
+    }
+
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {
         Room room = Room.builder()
                 .title(roomCreateRequest.title())
