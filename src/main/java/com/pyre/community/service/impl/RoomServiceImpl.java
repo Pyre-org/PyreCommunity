@@ -12,6 +12,7 @@ import com.pyre.community.enumeration.SpaceRole;
 import com.pyre.community.enumeration.SpaceType;
 import com.pyre.community.exception.customexception.CustomException;
 import com.pyre.community.exception.customexception.DataNotFoundException;
+import com.pyre.community.exception.customexception.DuplicateException;
 import com.pyre.community.exception.customexception.PermissionDenyException;
 import com.pyre.community.repository.*;
 import com.pyre.community.service.RoomService;
@@ -141,6 +142,9 @@ public class RoomServiceImpl implements RoomService {
         if (!room.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
+        if (this.roomEndUserRepository.existsByIdAndAndUserId(roomId, userId)) {
+            throw new DuplicateException("이미 가입한 룸입니다.");
+        }
         Room gotRoom = room.get();
         List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findTop1ByUserIdOrderByIndexingDesc(userId);
         RoomEndUser savedRoomEndUser;
@@ -179,11 +183,13 @@ public class RoomServiceImpl implements RoomService {
                 .type(roomCreateRequest.type())
                 .build();
         Room savedRoom = this.roomRepository.save(room);
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findTop1ByUserIdOrderByIndexingDesc(userId);
         RoomEndUser roomEndUser = RoomEndUser.builder()
                 .userId(userId)
                 .room(room)
                 .owner(true)
                 .role(RoomRole.ROOM_ADMIN)
+                .indexing(roomEndUsers.get(0).getIndexing() + 1)
                 .build();
         this.roomEndUserRepository.save(roomEndUser);
         Space feed = Space.builder()
