@@ -4,18 +4,13 @@ package com.pyre.community.service.impl;
 import com.pyre.community.client.UserClient;
 import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
-import com.pyre.community.entity.Channel;
-import com.pyre.community.entity.ChannelEndUser;
-import com.pyre.community.entity.Room;
-import com.pyre.community.entity.Space;
+import com.pyre.community.entity.*;
 import com.pyre.community.enumeration.*;
 import com.pyre.community.exception.customexception.AuthenticationFailException;
 import com.pyre.community.exception.customexception.CustomException;
 import com.pyre.community.exception.customexception.DataNotFoundException;
-import com.pyre.community.repository.ChannelEndUserRepository;
-import com.pyre.community.repository.ChannelRepository;
-import com.pyre.community.repository.RoomRepository;
-import com.pyre.community.repository.SpaceRepository;
+import com.pyre.community.exception.customexception.PermissionDenyException;
+import com.pyre.community.repository.*;
 import com.pyre.community.service.ChannelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +38,7 @@ public class ChannelServiceImpl implements ChannelService {
     private final SpaceRepository spaceRepository;
     private final UserClient userClient;
     private final RoomRepository roomRepository;
+    private final RoomEndUserRepository roomEndUserRepository;
     @Override
     @Transactional
     public ChannelCreateViewDto createChannel(ChannelCreateDto channelCreateDto, UUID id) {
@@ -201,10 +197,10 @@ public class ChannelServiceImpl implements ChannelService {
         UserInfoFeignResponse userInfo = this.userClient.getUserInfo(accessToken);
         Optional<Channel> channel = this.channelRepository.findById(channelId);
         if (userInfo == null) {
-            throw new AuthenticationFailException("권한이 없습니다.");
+            throw new PermissionDenyException("권한이 없습니다.");
         }
         if (!userInfo.role().equals("ROLE_ADMIN")) {
-            throw new AuthenticationFailException("권한이 없습니다.");
+            throw new PermissionDenyException("권한이 없습니다.");
         }
 
         if (!channel.isPresent()) {
@@ -227,10 +223,10 @@ public class ChannelServiceImpl implements ChannelService {
         UserInfoFeignResponse userInfo = this.userClient.getUserInfo(accessToken);
         Optional<Channel> channel = this.channelRepository.findById(channelId);
         if (userInfo == null) {
-            throw new AuthenticationFailException("권한이 없습니다.");
+            throw new PermissionDenyException("권한이 없습니다.");
         }
         if (!userInfo.role().equals("ROLE_ADMIN")) {
-            throw new AuthenticationFailException("권한이 없습니다.");
+            throw new PermissionDenyException("권한이 없습니다.");
         }
 
         if (!channel.isPresent()) {
@@ -312,6 +308,20 @@ public class ChannelServiceImpl implements ChannelService {
                 .indexing(indexing)
                 .build();
         ChannelEndUser saveChannelEndUser = this.channelEndUserRepository.save(channelEndUser);
+        RoomEndUser global = RoomEndUser.builder()
+                .room(this.roomRepository.findByChannelAndType(gotChannel, RoomType.ROOM_GLOBAL))
+                .owner(false)
+                .userId(userId)
+                .role(RoomRole.ROOM_USER)
+                .indexing(0).build();
+        this.roomEndUserRepository.save(global);
+        RoomEndUser capture = RoomEndUser.builder()
+                .room(this.roomRepository.findByChannelAndType(gotChannel, RoomType.ROOM_CAPTURE))
+                .owner(false)
+                .userId(userId)
+                .role(RoomRole.ROOM_USER)
+                .indexing(1).build();
+        this.roomEndUserRepository.save(capture);
         ChannelJoinResponse channelJoinResponse = ChannelJoinResponse.makeDto(gotChannel.getId(), request.agreement());
         return channelJoinResponse;
     }
@@ -389,6 +399,13 @@ public class ChannelServiceImpl implements ChannelService {
         if (channelEndUser.get().getBan().equals(true)) {
             throw new CustomException("차단 당한 채널은 탈퇴할 수 없습니다.");
         }
+        List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId);
+        for (ChannelEndUser c : channelEndUsers) {
+            if (c.getIndexing() > channelEndUser.get().getIndexing()) {
+                c.updateIndexing(c.getIndexing()-1);
+                this.channelEndUserRepository.save(c);
+            }
+        }
 
         this.channelEndUserRepository.delete(channelEndUser.get());
 
@@ -407,7 +424,7 @@ public class ChannelServiceImpl implements ChannelService {
         }
 
         if (channelEndUser.get().getRole() != ChannelRole.CHANNEL_ADMIN) {
-            throw new CustomException("해당 채널의 관리자가 아닙니다.");
+            throw new PermissionDenyException("해당 채널의 관리자가 아닙니다.");
         }
         Optional<ChannelEndUser> target = this.channelEndUserRepository.findByChannelAndUserId(gotChannel, targetId);
         if (!target.isPresent()) {
