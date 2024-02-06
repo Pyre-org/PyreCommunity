@@ -48,7 +48,7 @@ public class RoomController {
     @Operation(description = "공개된, 오픈된, 소속된 룸 정보 가져오기 검색 전용")
     @Parameters({
             @Parameter(name = "id", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
-            @Parameter(name = "token", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
     public ResponseEntity<RoomGetResponse> getRoom(
             @PathVariable String id,
