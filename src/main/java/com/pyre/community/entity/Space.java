@@ -23,7 +23,9 @@ public class Space {
     @ToString.Exclude
     @JoinColumn(name = "ROOM_ID")
     private Room room;
+    @Enumerated(value = EnumType.STRING)
     private SpaceType type;  // 채팅 OR 피드 스페이스
+    @Enumerated(value = EnumType.STRING)
     private SpaceRole role;  // 스페이스를 볼 수 있는 권한의 시작
     @Builder
     public Space(

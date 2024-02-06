@@ -32,7 +32,6 @@ public class ChannelController {
     @PostMapping("/create")
     @Operation(description = "채널 생성")
     @Parameters({
-            @Parameter(name = "channelCreateDto", description = "액세스 토큰", required = true, example = "accestoken.accesstoken"),
             @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, example = "afasdwq-xcvxwe-sacdsd"),
     })
     public ResponseEntity<ChannelCreateViewDto> createChannel(@RequestBody @Valid ChannelCreateDto channelCreateDto, @RequestHeader(value = "id") String userId) {
@@ -104,7 +103,6 @@ public class ChannelController {
     @Operation(description = "채널 수용 승인 및 변경")
     @Parameters({
             @Parameter(name = "accessToken", description = "액세스 토큰", required = true, in = ParameterIn.HEADER, example = "accestoken.accesstoken"),
-            @Parameter(name = "allow", description = "승인 바디", required = true),
             @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "asfdsfq-adascvcx-asd")
     })
     public ResponseEntity<String> updateChannelApprovalStatus(
@@ -117,7 +115,6 @@ public class ChannelController {
     @Operation(description = "채널 정보 수정")
     @Parameters({
             @Parameter(name = "accessToken", description = "액세스 토큰", required = true, in = ParameterIn.HEADER, example = "accestoken.accesstoken"),
-            @Parameter(name = "channelEditDto", description = "정보 수정 바디", required = true),
             @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "asfadf-vcsrew-dasd")
     })
     public ResponseEntity<ChannelGetViewDto> editChannel(
@@ -154,8 +151,7 @@ public class ChannelController {
     @PostMapping("/join")
     @Parameters({
             @Parameter(name = "accessToken", description = "액세스 토큰", required = true, in = ParameterIn.HEADER, example = "accestoken.accesstoken"),
-            @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, in = ParameterIn.HEADER, example = "asdafwq-aczv-asdfqw"),
-            @Parameter(name = "request", description = "채널 조인 바디", required = true)
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, in = ParameterIn.HEADER, example = "asdafwq-aczv-asdfqw")
     })
     public ResponseEntity<ChannelJoinResponse> join(
             @RequestHeader("Authorization") String token,
@@ -172,8 +168,7 @@ public class ChannelController {
     @PatchMapping("/locate")
     @Parameters({
             @Parameter(name = "accessToken", description = "액세스 토큰", required = true, in = ParameterIn.HEADER, example = "accestoken.accesstoken"),
-            @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, in = ParameterIn.HEADER, example = "asdqwe-qweaxc-cxvxc"),
-            @Parameter(name = "request", description = "채널 로케이트 바디", required = true)
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, in = ParameterIn.HEADER, example = "asdqwe-qweaxc-cxvxc")
     })
     public ResponseEntity<String> locateChannel(
             @RequestHeader("Authorization") String token,
