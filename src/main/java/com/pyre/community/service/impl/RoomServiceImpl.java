@@ -16,12 +16,12 @@ import com.pyre.community.exception.customexception.DuplicateException;
 import com.pyre.community.exception.customexception.PermissionDenyException;
 import com.pyre.community.repository.*;
 import com.pyre.community.service.RoomService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.enums.Enum;
 import org.apache.tomcat.websocket.AuthenticationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 

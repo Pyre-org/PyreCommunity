@@ -5,7 +5,8 @@ import com.pyre.community.dto.response.RoomCreateResponse;
 import com.pyre.community.dto.response.RoomGetResponse;
 import com.pyre.community.dto.response.RoomJoinResponse;
 import com.pyre.community.dto.response.RoomListByChannelResponse;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+
 
 import java.util.UUID;
 
