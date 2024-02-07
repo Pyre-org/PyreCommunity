@@ -59,7 +59,7 @@ public class RoomController {
     @GetMapping("/list/{channelId}")
     @Operation(description = "채널의 공개된, 오픈된 모든 룸 가져오기 검색 전용")
     @Parameters({
-            @Parameter(name = "channelId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
             @Parameter(name = "keyword", description = "검색어", in = ParameterIn.QUERY, example = "오버워"),
             @Parameter(name = "type", description = "룸 타입", in = ParameterIn.QUERY, example = "ROOM_PUBLIC")
     })
@@ -73,7 +73,7 @@ public class RoomController {
     @GetMapping("/my/list/{channelId}")
     @Operation(description = "채널의 소속된 모든 룸 가져오기 검색 전용")
     @Parameters({
-            @Parameter(name = "channelId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
             @Parameter(name = "keyword", description = "검색어", in = ParameterIn.QUERY, example = "오버워"),
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
@@ -87,7 +87,7 @@ public class RoomController {
     @GetMapping("/my/{channelId}")
     @Operation(description = "채널의 소속된 모든 룸 가져오기 순서대로")
     @Parameters({
-            @Parameter(name = "channelId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
     public ResponseEntity<RoomListByChannelResponse> listByChannelAndKeywordAndUserId (
