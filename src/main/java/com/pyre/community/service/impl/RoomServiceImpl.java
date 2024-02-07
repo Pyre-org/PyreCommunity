@@ -49,6 +49,9 @@ public class RoomServiceImpl implements RoomService {
         if (channelEndUser.get().getBan().equals(true)) {
             throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
         }
+        if (this.roomRepository.existsByChannelAndTitle(gotChannel, roomCreateRequest.title())) {
+            throw new DuplicateException("해당 채널에 이미 " +  roomCreateRequest.title() + " 이름을 가진 룸이 있습니다.");
+        }
         Room savedRoom = createRoomAndSpace(roomCreateRequest, gotChannel, userId);
         RoomCreateResponse roomCreateResponse = RoomCreateResponse.makeDto(savedRoom);
         return roomCreateResponse;
@@ -175,6 +178,10 @@ public class RoomServiceImpl implements RoomService {
     }
 
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {
+        if (!roomCreateRequest.type().equals(RoomType.ROOM_PUBLIC) && !roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE)
+        && !roomCreateRequest.type().equals(RoomType.ROOM_OPEN)) {
+            throw new PermissionDenyException("해당 룸의 타입을 공용 또는 캡처로 설정할 수 없습니다.");
+        }
         Room room = Room.builder()
                 .title(roomCreateRequest.title())
                 .description(roomCreateRequest.description())

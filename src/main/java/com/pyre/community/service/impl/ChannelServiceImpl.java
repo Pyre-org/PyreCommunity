@@ -468,18 +468,21 @@ public class ChannelServiceImpl implements ChannelService {
                 .room(globalRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
                 .type(SpaceType.SPACE_FEED)
+                .prev(null)
                 .build();
-        this.spaceRepository.save(globalFeed);
+        Space savedFeed = this.spaceRepository.save(globalFeed);
         Space globalChat = Space.builder()
                 .room(globalRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
                 .type(SpaceType.SPACE_CHAT)
+                .prev(savedFeed)
                 .build();
         this.spaceRepository.save(globalChat);
         Space feed = Space.builder()
                 .room(captureRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
                 .type(SpaceType.SPACE_FEED)
+                .prev(null)
                 .build();
         this.spaceRepository.save(feed);
     }
