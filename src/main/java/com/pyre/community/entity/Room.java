@@ -31,6 +31,7 @@ public class Room {
     private String title;
     private String description;
     private String imageUrl;
+    @Enumerated(value = EnumType.STRING)
     private RoomType type;
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
     private List<RoomEndUser> users;

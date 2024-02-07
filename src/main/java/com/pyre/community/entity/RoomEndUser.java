@@ -30,7 +30,7 @@ public class RoomEndUser extends BaseEntity {
     private Channel channel;
     @Column(name = "USER_ID")
     private UUID userId;
-
+    @Enumerated(value = EnumType.STRING)
     private RoomRole role;
     private Boolean owner;
     private int indexing;

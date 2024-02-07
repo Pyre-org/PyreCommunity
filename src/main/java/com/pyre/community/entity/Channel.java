@@ -31,6 +31,7 @@ public class Channel {
     private Set<ChannelEndUser> endUsers;
     @OneToMany(mappedBy = "channel", cascade = CascadeType.ALL)
     private List<Room> rooms;
+    @Enumerated(value = EnumType.STRING)
     private ChannelType type;
     private LocalDateTime cAt;
     private LocalDateTime mAt;

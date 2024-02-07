@@ -35,7 +35,6 @@ public class RoomController {
     @PostMapping("/create")
     @Operation(description = "룸 생성하기")
     @Parameters({
-            @Parameter(name = "roomCreateRequest", description = "룸 생성 바디", required = true),
             @Parameter(name = "token", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "asdqwfsdf-vcxvasd-asd")
     })
     public ResponseEntity<RoomCreateResponse> createRoom(
@@ -100,8 +99,7 @@ public class RoomController {
     @Operation(description = "해당 룸 아이디로 가입합니다.")
     @Parameters({
             @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
-            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd"),
-            @Parameter(name = "roomJoinRequest", description = "룸 조인 바디 (채널 UUID)", required = true)
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
     public ResponseEntity<RoomJoinResponse> joinRoom(
             @PathVariable String roomId,

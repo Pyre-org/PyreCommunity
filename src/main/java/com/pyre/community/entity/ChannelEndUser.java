@@ -27,7 +27,7 @@ public class ChannelEndUser extends BaseEntity {
 
     @Column(name = "USER_ID")
     private UUID userId;
-
+    @Enumerated(value = EnumType.STRING)
     private ChannelRole role;
 
     private Boolean agreement;
