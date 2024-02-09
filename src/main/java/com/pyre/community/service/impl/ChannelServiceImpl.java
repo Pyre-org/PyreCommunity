@@ -175,7 +175,7 @@ public class ChannelServiceImpl implements ChannelService {
 
         Page<Channel> channels = this.channelRepository.findAllByApprovalStatusAndTitleStartingWith(ApprovalStatus.ALLOW, keyword, pageable);
         if (genre != null) {
-            channels = this.channelRepository.findAllByGenreAndApprovalStatusAndTitleStartingWith(genre, ApprovalStatus.ALLOW, keyword, pageable);
+            channels = this.channelRepository.findAllByGenreAndApprovalStatusAndTitleContaining(genre, ApprovalStatus.ALLOW, keyword, pageable);
         }
 
         ChannelGetAllViewDto channelGetViewDtos = new ChannelGetAllViewDto(channels.getTotalElements(), new ArrayList<>());

@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Repository
 public interface ChannelRepository extends JpaRepository<Channel, UUID> {
-    Page<Channel> findAllByGenreAndApprovalStatusAndTitleStartingWith(String Genre, ApprovalStatus approvalStatus, String title, Pageable pageable);
+    Page<Channel> findAllByGenreAndApprovalStatusAndTitleContaining(String Genre, ApprovalStatus approvalStatus, String title, Pageable pageable);
     Page<Channel> findAll(Pageable pageable);
     Page<Channel> findAllByApprovalStatus(ApprovalStatus approvalStatus, Pageable pageable);
     Page<Channel> findAllByApprovalStatusAndTitleStartingWith(ApprovalStatus approvalStatus, String title, Pageable pageable);

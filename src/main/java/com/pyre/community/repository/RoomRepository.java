@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface RoomRepository extends JpaRepository<Room, UUID> {
-    List<Room> findAllByChannelAndTypeAndTitleStartingWithOrderByTitle(Channel channel, RoomType type, String title);
+    List<Room> findAllByChannelAndTypeAndTitleContainingOrderByTitle(Channel channel, RoomType type, String title);
     Room findByChannelAndType(Channel channel, RoomType type);
     Boolean existsByChannelAndTitle(Channel channel, String title);
 }

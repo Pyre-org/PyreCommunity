@@ -90,7 +90,7 @@ public class RoomServiceImpl implements RoomService {
         if (!type.equals("ROOM_PUBLIC") && !type.equals("ROOM_OPEN")) {
             keyword = "ROOM_PUBLIC";
         }
-        List<Room> rooms = this.roomRepository.findAllByChannelAndTypeAndTitleStartingWithOrderByTitle(channel.get(), RoomType.valueOf(type), keyword);
+        List<Room> rooms = this.roomRepository.findAllByChannelAndTypeAndTitleContainingOrderByTitle(channel.get(), RoomType.valueOf(type), keyword);
         return RoomListByChannelResponse.makeDto(rooms);
     }
     @Transactional
