@@ -3,6 +3,7 @@ package com.pyre.community.service;
 
 import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
+import com.pyre.community.enumeration.ChannelGenre;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -20,7 +21,7 @@ public interface ChannelService {
     @Transactional
     ChannelGetAllViewDto getAllChannelByUserAndSearch(
             UUID userId, String token,
-            String genre,
+            ChannelGenre genre,
             String sortBy,
             String keyword,
             Boolean orderByDesc
@@ -29,7 +30,7 @@ public interface ChannelService {
     ChannelGetAllViewDto getAllChannel(
             int page,
             int count,
-            String genre,
+            ChannelGenre genre,
             String sortBy,
             String keyword,
             Boolean orderByDesc

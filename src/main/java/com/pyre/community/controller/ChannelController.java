@@ -2,6 +2,7 @@ package com.pyre.community.controller;
 
 import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
+import com.pyre.community.enumeration.ChannelGenre;
 import com.pyre.community.service.ChannelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -63,12 +64,12 @@ public class ChannelController {
     public ResponseEntity<ChannelGetAllViewDto> getCommunityListBySearch(
             @RequestHeader("Authorization")  String token,
             @RequestHeader("id") String userId,
-            @RequestParam(value = "genre", required = false)  String genre,
+            @RequestParam(value = "genre", defaultValue = "GENERAL")  String genre,
             @RequestParam(value = "sortBy", defaultValue = "title")  String sortBy,
             @RequestParam(value = "keyword", defaultValue = "") String keyword,
             @RequestParam(value = "orderByDesc", defaultValue = "true") Boolean orderByDesc
     ) {
-        ChannelGetAllViewDto response = this.channelService.getAllChannelByUserAndSearch(UUID.fromString(userId), token, genre, sortBy, keyword, orderByDesc);
+        ChannelGetAllViewDto response = this.channelService.getAllChannelByUserAndSearch(UUID.fromString(userId), token, ChannelGenre.valueOf(genre), sortBy, keyword, orderByDesc);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @GetMapping("/get/{channelId}")
@@ -92,12 +93,12 @@ public class ChannelController {
     public ResponseEntity<ChannelGetAllViewDto> getAllChannel(
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "count", defaultValue = "50") int count,
-            @RequestParam(value = "genre", required = false) String genre,
+            @RequestParam(value = "genre", defaultValue = "GENERAL") String genre,
             @RequestParam(value = "sortBy", defaultValue = "title") String sortBy,
             @RequestParam(value = "keyword", defaultValue = "") String keyword,
             @RequestParam(value = "orderByDesc", defaultValue = "true") Boolean orderByDesc
     ) {
-        return new ResponseEntity<>(this.channelService.getAllChannel(page, count, genre, sortBy, keyword, orderByDesc), HttpStatus.OK);
+        return new ResponseEntity<>(this.channelService.getAllChannel(page, count, ChannelGenre.valueOf(genre), sortBy, keyword, orderByDesc), HttpStatus.OK);
     }
     @PatchMapping("/approval/{channelId}")
     @Operation(description = "채널 수용 승인 및 변경")

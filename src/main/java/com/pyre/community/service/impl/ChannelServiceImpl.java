@@ -94,7 +94,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelGetAllViewDto getAllChannelByUserAndSearch(
             UUID userId, String token,
-            String genre,
+            ChannelGenre genre,
             String sortBy,
             String keyword,
             Boolean orderByDesc
@@ -158,7 +158,7 @@ public class ChannelServiceImpl implements ChannelService {
     public ChannelGetAllViewDto getAllChannel(
             int page,
             int count,
-            String genre,
+            ChannelGenre genre,
             String sortBy,
             String keyword,
             Boolean orderByDesc
@@ -173,7 +173,7 @@ public class ChannelServiceImpl implements ChannelService {
 
         Pageable pageable = PageRequest.of(page, count, sort);
 
-        Page<Channel> channels = this.channelRepository.findAllByApprovalStatusAndTitleStartingWith(ApprovalStatus.ALLOW, keyword, pageable);
+        Page<Channel> channels = this.channelRepository.findAllByApprovalStatusAndTitleContaining(ApprovalStatus.ALLOW, keyword, pageable);
         if (genre != null) {
             channels = this.channelRepository.findAllByGenreAndApprovalStatusAndTitleContaining(genre, ApprovalStatus.ALLOW, keyword, pageable);
         }
