@@ -1,10 +1,7 @@
 package com.pyre.community.service;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
-import com.pyre.community.dto.response.RoomCreateResponse;
-import com.pyre.community.dto.response.RoomGetResponse;
-import com.pyre.community.dto.response.RoomJoinResponse;
-import com.pyre.community.dto.response.RoomListByChannelResponse;
+import com.pyre.community.dto.response.*;
 import org.springframework.transaction.annotation.Transactional;
 
 
@@ -14,7 +11,7 @@ public interface RoomService {
     @Transactional
     RoomCreateResponse createRoom(UUID userId, RoomCreateRequest roomCreateRequest);
     @Transactional
-    RoomGetResponse getRoom(UUID id, UUID userId);
+    RoomGetDetailResponse getRoom(UUID id, UUID userId);
     @Transactional
     RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type);
     @Transactional

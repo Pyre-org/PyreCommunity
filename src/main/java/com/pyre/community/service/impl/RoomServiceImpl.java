@@ -1,10 +1,7 @@
 package com.pyre.community.service.impl;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
-import com.pyre.community.dto.response.RoomCreateResponse;
-import com.pyre.community.dto.response.RoomGetResponse;
-import com.pyre.community.dto.response.RoomJoinResponse;
-import com.pyre.community.dto.response.RoomListByChannelResponse;
+import com.pyre.community.dto.response.*;
 import com.pyre.community.entity.*;
 import com.pyre.community.enumeration.RoomRole;
 import com.pyre.community.enumeration.RoomType;
@@ -58,7 +55,7 @@ public class RoomServiceImpl implements RoomService {
     }
     @Transactional
     @Override
-    public RoomGetResponse getRoom(UUID id, UUID userId) {
+    public RoomGetDetailResponse getRoom(UUID id, UUID userId) {
         Optional<Room> room = this.roomRepository.findById(id);
         if (!room.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 룸 입니다.");
@@ -70,13 +67,13 @@ public class RoomServiceImpl implements RoomService {
                         gotRoom.getType().equals(RoomType.ROOM_CAPTURE) ||
                         gotRoom.getType().equals(RoomType.ROOM_GLOBAL)
         ) {
-            RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
+            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom);
             return roomGetResponse;
         } else {
             if (!this.roomEndUserRepository.existsByIdAndAndUserId(id, userId)) {
                 throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
             }
-            RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
+            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom);
             return roomGetResponse;
         }
     }

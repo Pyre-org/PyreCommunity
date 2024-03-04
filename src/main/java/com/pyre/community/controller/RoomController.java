@@ -2,10 +2,7 @@ package com.pyre.community.controller;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
 import com.pyre.community.dto.request.RoomJoinRequest;
-import com.pyre.community.dto.response.RoomCreateResponse;
-import com.pyre.community.dto.response.RoomGetResponse;
-import com.pyre.community.dto.response.RoomJoinResponse;
-import com.pyre.community.dto.response.RoomListByChannelResponse;
+import com.pyre.community.dto.response.*;
 import com.pyre.community.enumeration.RoomType;
 import com.pyre.community.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,7 +46,7 @@ public class RoomController {
             @Parameter(name = "id", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
-    public ResponseEntity<RoomGetResponse> getRoom(
+    public ResponseEntity<RoomGetDetailResponse> getRoom(
             @PathVariable String id,
             @RequestHeader("id") String userId
     ) {
