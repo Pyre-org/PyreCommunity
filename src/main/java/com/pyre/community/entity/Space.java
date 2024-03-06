@@ -31,19 +31,27 @@ public class Space extends BaseEntity {
     private Space prev;
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Space next;
+    private String title;
+    private String description;
     @Builder
     public Space(
             Room room,
             SpaceType type,
             SpaceRole role,
-            Space prev
+            Space prev,
+            String title,
+            String description
     ) {
         this.room = room;
         this.type = type;
         this.role = role;
         this.prev = prev;
         this.next = null;
+        this.title = title;
+        this.description = description;
     }
-
+    public void setNext(Space next) {
+        this.next = next;
+    }
 
 }
