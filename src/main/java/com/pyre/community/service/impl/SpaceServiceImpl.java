@@ -7,6 +7,7 @@ import com.pyre.community.entity.Room;
 import com.pyre.community.entity.RoomEndUser;
 import com.pyre.community.entity.Space;
 import com.pyre.community.enumeration.RoomRole;
+import com.pyre.community.enumeration.SpaceRole;
 import com.pyre.community.exception.customexception.DataNotFoundException;
 import com.pyre.community.exception.customexception.PermissionDenyException;
 import com.pyre.community.repository.*;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -42,11 +44,23 @@ public class SpaceServiceImpl implements SpaceService {
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 모더나 어드민이 아닙니다.");
         }
-
-        return null;
+        Space space = Space.builder()
+                .room(room.get())
+                .title(spaceCreateRequest.title())
+                .description(spaceCreateRequest.description())
+                .type(spaceCreateRequest.type())
+                .role(SpaceRole.SPACEROLE_USER)
+                .prev(getLastSpace(room.get()))
+                .build();
+        getLastSpace(room.get()).setNext(space);
+        Space savedSpace = this.spaceRepository.save(space);
+        SpaceCreateResponse spaceCreateResponse = SpaceCreateResponse.makeDto(savedSpace);
+        return spaceCreateResponse;
     }
     private Space getLastSpace(Room room) {
-        return null;
+        List<Space> spaces = spaceRepository.findAllByRoom(room);
+        Space lastSpace = spaces.stream().map(Space::getNext).filter(next -> next == null).findFirst().orElse(null);
+        return lastSpace;
     }
 
 }

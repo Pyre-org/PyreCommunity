@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface SpaceService {
     @Transactional
     SpaceCreateResponse createSpace(SpaceCreateRequest spaceCreateRequest, UUID userId);
+    
 }
