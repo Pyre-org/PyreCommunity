@@ -2,6 +2,7 @@ package com.pyre.community.service.impl;
 
 import com.pyre.community.dto.request.SpaceCreateRequest;
 import com.pyre.community.dto.response.SpaceCreateResponse;
+import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
 import com.pyre.community.entity.ChannelEndUser;
 import com.pyre.community.entity.Room;
 import com.pyre.community.entity.RoomEndUser;
@@ -57,6 +58,22 @@ public class SpaceServiceImpl implements SpaceService {
         SpaceCreateResponse spaceCreateResponse = SpaceCreateResponse.makeDto(savedSpace);
         return spaceCreateResponse;
     }
+    @Transactional(readOnly = true)
+    @Override
+    public SpaceGetListByRoomResponse getSpaceListByRoom(UUID userId, String roomId) {
+        Optional<Room> room = this.roomRepository.findById(UUID.fromString(roomId));
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("해당 룸은 존재하지 않습니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = this.roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
+        }
+        List<Space> spaces = this.spaceRepository.findAllByRoom(room.get());
+        SpaceGetListByRoomResponse spaceGetListByRoomResponse = SpaceGetListByRoomResponse.makeDto(spaces);
+        return spaceGetListByRoomResponse;
+    }
+
     private Space getLastSpace(Room room) {
         List<Space> spaces = spaceRepository.findAllByRoom(room);
         Space lastSpace = spaces.stream().map(Space::getNext).filter(next -> next == null).findFirst().orElse(null);
