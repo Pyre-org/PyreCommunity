@@ -59,7 +59,7 @@ public class ChannelServiceImpl implements ChannelService {
         return channelCreateViewDto;
     }
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ChannelGetViewDto getChannel(UUID id) {
         Optional<Channel> channel = this.channelRepository.findById(id);
         if (!channel.isPresent()) {
@@ -69,7 +69,7 @@ public class ChannelServiceImpl implements ChannelService {
         ChannelGetViewDto channelGetViewDto = ChannelGetViewDto.createChannelGetViewDto(getChannel);
         return channelGetViewDto;
     }
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public ChannelGetAllViewDto getAllChannelByUser(
             UUID userId, String token
@@ -90,7 +90,7 @@ public class ChannelServiceImpl implements ChannelService {
         }
         return channelGetViewDtos;
     }
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public ChannelGetAllViewDto getAllChannelByUserAndSearch(
             UUID userId, String token,
@@ -154,7 +154,7 @@ public class ChannelServiceImpl implements ChannelService {
         return channelGetViewDtos;
     }
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ChannelGetAllViewDto getAllChannel(
             int page,
             int count,
@@ -244,7 +244,7 @@ public class ChannelServiceImpl implements ChannelService {
         return channelGetViewDto;
     }
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ChannelGetAllViewDto viewWaitApprovalChannel(String accessToken, int page, int count) {
 
         UserInfoFeignResponse userInfo = this.userClient.getUserInfo(accessToken);
@@ -268,7 +268,7 @@ public class ChannelServiceImpl implements ChannelService {
         return allViewDto;
     }
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ChannelGetGenresResponseDto getGenres(String name) {
         List<ChannelGenre> genres = new ArrayList<>();
 

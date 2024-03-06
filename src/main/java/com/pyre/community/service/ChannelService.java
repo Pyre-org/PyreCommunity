@@ -12,13 +12,13 @@ import java.util.UUID;
 public interface ChannelService {
     @Transactional
     ChannelCreateViewDto createChannel(ChannelCreateDto channelCreateDto, UUID userId);
-    @Transactional
+    @Transactional(readOnly = true)
     ChannelGetViewDto getChannel(UUID id);
-    @Transactional
+    @Transactional(readOnly = true)
     ChannelGetAllViewDto getAllChannelByUser(
             UUID userId, String token
     );
-    @Transactional
+    @Transactional(readOnly = true)
     ChannelGetAllViewDto getAllChannelByUserAndSearch(
             UUID userId, String token,
             ChannelGenre genre,
@@ -26,7 +26,7 @@ public interface ChannelService {
             String keyword,
             Boolean orderByDesc
     );
-    @Transactional
+    @Transactional(readOnly = true)
     ChannelGetAllViewDto getAllChannel(
             int page,
             int count,
@@ -39,9 +39,9 @@ public interface ChannelService {
     String updateChannelApprovalStatus(String accessToken, UUID channelId, ChannelUpdateApprovalStatusDto allow);
     @Transactional
     ChannelGetViewDto editChannel(String accessToken, UUID channelId, ChannelEditDto channelEditDto);
-    @Transactional
+    @Transactional(readOnly = true)
     ChannelGetAllViewDto viewWaitApprovalChannel(String accessToken, int page, int count);
-    @Transactional
+    @Transactional(readOnly = true)
     ChannelGetGenresResponseDto getGenres(String name);
     @Transactional
     ChannelJoinResponse joinChannel(UUID userId, String accessToken, ChannelJoinRequest request);

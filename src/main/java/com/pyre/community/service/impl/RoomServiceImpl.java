@@ -53,7 +53,7 @@ public class RoomServiceImpl implements RoomService {
         RoomCreateResponse roomCreateResponse = RoomCreateResponse.makeDto(savedRoom);
         return roomCreateResponse;
     }
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public RoomGetDetailResponse getRoom(UUID id, UUID userId) {
         Optional<Room> room = this.roomRepository.findById(id);
@@ -77,7 +77,7 @@ public class RoomServiceImpl implements RoomService {
             return roomGetResponse;
         }
     }
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
@@ -90,7 +90,7 @@ public class RoomServiceImpl implements RoomService {
         List<Room> rooms = this.roomRepository.findAllByChannelAndTypeAndTitleContainingOrderByTitle(channel.get(), RoomType.valueOf(type), keyword);
         return RoomListByChannelResponse.makeDto(rooms);
     }
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public RoomListByChannelResponse listByChannelAndKeywordAndUserId(UUID channelId, String keyword, UUID userId) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
@@ -110,7 +110,7 @@ public class RoomServiceImpl implements RoomService {
         List<Room> sortedRoom = rooms.stream().sorted(Comparator.comparing(Room::getTitle)).toList();
         return RoomListByChannelResponse.makeDto(sortedRoom);
     }
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public RoomListByChannelResponse listByChannelAndUserIdByIndexing(UUID channelId, UUID userId) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
