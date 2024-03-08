@@ -83,7 +83,7 @@ public class RoomController {
         return new ResponseEntity<>(this.roomService.listByChannelAndKeywordAndUserId(UUID.fromString(channelId), keyword, UUID.fromString(userId)), HttpStatus.OK);
     }
     @GetMapping("/my/{channelId}")
-    @Operation(description = "채널의 소속된 모든 룸 가져오기 순서대로")
+    @Operation(description = "채널의 소속된 모든 룸 + 스페이스 가져오기 순서대로")
     @Parameters({
             @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
