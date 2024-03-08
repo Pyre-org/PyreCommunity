@@ -212,7 +212,6 @@ public class ChannelServiceImpl implements ChannelService {
             this.channelRepository.delete(gotChannel);
         } else {
             gotChannel.updateApprovalStatus(allow.status());
-            this.channelRepository.save(gotChannel);
         }
         return "성공적으로 채널이 " + allow.status() +" 되었습니다.";
     }
@@ -239,8 +238,8 @@ public class ChannelServiceImpl implements ChannelService {
                 channelEditDto.genre(),
                 channelEditDto.imageUrl());
 
-        Channel savedChannel = this.channelRepository.save(gotChannel);
-        ChannelGetViewDto channelGetViewDto = ChannelGetViewDto.createChannelGetViewDto(savedChannel);
+
+        ChannelGetViewDto channelGetViewDto = ChannelGetViewDto.createChannelGetViewDto(gotChannel);
         return channelGetViewDto;
     }
     @Override
@@ -313,14 +312,17 @@ public class ChannelServiceImpl implements ChannelService {
                 .owner(false)
                 .userId(userId)
                 .role(RoomRole.ROOM_USER)
-                .indexing(0).build();
-        this.roomEndUserRepository.save(global);
+                .prev(null)
+                .build();
+        RoomEndUser savedGlobal = this.roomEndUserRepository.save(global);
         RoomEndUser capture = RoomEndUser.builder()
                 .room(this.roomRepository.findByChannelAndType(gotChannel, RoomType.ROOM_CAPTURE))
                 .owner(false)
                 .userId(userId)
                 .role(RoomRole.ROOM_USER)
-                .indexing(1).build();
+                .prev(savedGlobal)
+                .build();
+        savedGlobal.updateNext(capture);
         this.roomEndUserRepository.save(capture);
         ChannelJoinResponse channelJoinResponse = ChannelJoinResponse.makeDto(gotChannel.getId(), request.agreement());
         return channelJoinResponse;
@@ -342,25 +344,20 @@ public class ChannelServiceImpl implements ChannelService {
             if (request.to() <= fromIndexing) {
                 if (channelEndUsers.indexOf(ce) == fromIndexing) {
                     ce.updateIndexing(request.to());
-                    this.channelEndUserRepository.save(ce);
                     break;
                 }
                 if (channelEndUsers.indexOf(ce) >= request.to()) {
                     ce.updateIndexing(ce.getIndexing()+1);
-                    this.channelEndUserRepository.save(ce);
                 }
             } else {
                 if (channelEndUsers.indexOf(ce) == request.to()) {
                     ChannelEndUser from = channelEndUsers.get(fromIndexing);
                     ce.updateIndexing(ce.getIndexing()+1);
-                    this.channelEndUserRepository.save(ce);
                     from.updateIndexing(request.to());
-                    this.channelEndUserRepository.save(from);
                     break;
                 }
                 if (channelEndUsers.indexOf(ce) > fromIndexing) {
                     ce.updateIndexing(ce.getIndexing()-1);
-                    this.channelEndUserRepository.save(ce);
                 }
             }
         }
@@ -403,7 +400,6 @@ public class ChannelServiceImpl implements ChannelService {
         for (ChannelEndUser c : channelEndUsers) {
             if (c.getIndexing() > channelEndUser.get().getIndexing()) {
                 c.updateIndexing(c.getIndexing()-1);
-                this.channelEndUserRepository.save(c);
             }
         }
 
@@ -435,7 +431,6 @@ public class ChannelServiceImpl implements ChannelService {
             throw new CustomException("관리자를 차단할 수 없습니다.");
         }
         gotTarget.updateBan(true);
-        this.channelEndUserRepository.save(gotTarget);
 
     }
 
@@ -468,6 +463,8 @@ public class ChannelServiceImpl implements ChannelService {
                 .room(globalRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
                 .type(SpaceType.SPACE_FEED)
+                .title("공용 피드")
+                .description("채널 공용 피드")
                 .prev(null)
                 .build();
         Space savedFeed = this.spaceRepository.save(globalFeed);
@@ -475,6 +472,8 @@ public class ChannelServiceImpl implements ChannelService {
                 .room(globalRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
                 .type(SpaceType.SPACE_CHAT)
+                .title("공용 채팅")
+                .description("채널 공용 채팅")
                 .prev(savedFeed)
                 .build();
         this.spaceRepository.save(globalChat);
@@ -482,6 +481,8 @@ public class ChannelServiceImpl implements ChannelService {
                 .room(captureRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
                 .type(SpaceType.SPACE_FEED)
+                .title("방금 캡처 됨")
+                .description("방금 캡처된 사진이 올라옵니다.")
                 .prev(null)
                 .build();
         this.spaceRepository.save(feed);

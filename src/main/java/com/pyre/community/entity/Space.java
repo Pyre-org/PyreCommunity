@@ -1,6 +1,7 @@
 package com.pyre.community.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.pyre.community.dto.request.SpaceUpdateRequest;
 import com.pyre.community.enumeration.SpaceRole;
 import com.pyre.community.enumeration.SpaceType;
 import jakarta.persistence.*;
@@ -50,8 +51,16 @@ public class Space extends BaseEntity {
         this.title = title;
         this.description = description;
     }
-    public void setNext(Space next) {
+    public void updateNext(Space next) {
         this.next = next;
+    }
+    public void updatePrev(Space prev) {
+        this.prev = prev;
+    }
+    public void updateSpace(SpaceUpdateRequest spaceUpdateRequest) {
+        this.role = spaceUpdateRequest.role();
+        this.title = spaceUpdateRequest.title();
+        this.description = spaceUpdateRequest.description();
     }
 
 }

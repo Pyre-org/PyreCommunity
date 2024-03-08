@@ -1,8 +1,10 @@
 package com.pyre.community.controller;
 
 import com.pyre.community.dto.request.SpaceCreateRequest;
+import com.pyre.community.dto.request.SpaceUpdateRequest;
 import com.pyre.community.dto.response.SpaceCreateResponse;
 import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
+import com.pyre.community.dto.response.SpaceGetResponse;
 import com.pyre.community.service.SpaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,5 +47,42 @@ public class SpaceController {
             @RequestParam("roomId") String roomId
     ) {
         return new ResponseEntity<>(this.spaceService.getSpaceListByRoom(UUID.fromString(userId), roomId), HttpStatus.OK);
+    }
+    @GetMapping("/info/{spaceId}")
+    @Operation(description = "스페이스 정보를 조회하는 엔드포인트")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<SpaceGetResponse> getSpaceInfoByRoom(
+            @RequestHeader("id") String userId,
+            @PathVariable("spaceId") String roomId
+    ) {
+        return new ResponseEntity<>(this.spaceService.getSpace(UUID.fromString(userId), roomId), HttpStatus.OK);
+    }
+    @PutMapping("/update/{spaceId}")
+    @Operation(description = "스페이스 정보를 수정하는 엔드포인트")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> updateSpaceInfoByRoom(
+            @RequestHeader("id") String userId,
+            @PathVariable("spaceId") String roomId,
+            @RequestBody SpaceUpdateRequest spaceUpdateRequest
+    ) {
+        return new ResponseEntity<>(this.spaceService.updateSpace(UUID.fromString(userId), roomId, spaceUpdateRequest), HttpStatus.OK);
+    }
+    @DeleteMapping("/delete/{spaceId}")
+    @Operation(description = "스페이스를 삭제하는 엔드포인트")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> deleteSpaceByRoom(
+            @RequestHeader("id") String userId,
+            @PathVariable("spaceId") String roomId
+    ) {
+        return new ResponseEntity<>(this.spaceService.deleteSpace(UUID.fromString(userId), roomId), HttpStatus.OK);
     }
 }
