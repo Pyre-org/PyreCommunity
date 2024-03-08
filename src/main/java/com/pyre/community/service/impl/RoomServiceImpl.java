@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -62,19 +63,65 @@ public class RoomServiceImpl implements RoomService {
             throw new DataNotFoundException("존재하지 않는 룸 입니다.");
         }
         Room gotRoom = room.get();
+        List<Space> sortedSpaces = new ArrayList<>();
         if (
                 gotRoom.getType().equals(RoomType.ROOM_PUBLIC) ||
                         gotRoom.getType().equals(RoomType.ROOM_OPEN) ||
                         gotRoom.getType().equals(RoomType.ROOM_CAPTURE) ||
                         gotRoom.getType().equals(RoomType.ROOM_GLOBAL)
         ) {
-            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom);
+            Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(gotRoom, userId);
+            if (!roomEndUser.isPresent()) {
+                List<Space> spaces = gotRoom.getSpaces().stream().filter(space ->
+                     space.getRole().equals(SpaceRole.SPACEROLE_GUEST)
+                ).collect(Collectors.toList());
+                Space firstSpace = getFirstSpace(spaces);
+                while (firstSpace != null) {
+                    sortedSpaces.add(firstSpace);
+                    firstSpace = firstSpace.getNext();
+                }
+
+            } else {
+                RoomEndUser gotRoomEndUser = roomEndUser.get();
+                List <Space> spaces = gotRoom.getSpaces().stream().filter(space -> {
+                    if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_USER)) {
+                        return space.getRole().equals(SpaceRole.SPACEROLE_USER) || space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
+                    }
+                    if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_GUEST)) {
+                        return space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
+                    }
+                    return true;
+                }).collect(Collectors.toList());
+
+                Space firstSpace = getFirstSpace(spaces);
+                while (firstSpace != null) {
+                    sortedSpaces.add(firstSpace);
+                    firstSpace = firstSpace.getNext();
+                }
+            }
+            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom, sortedSpaces);
             return roomGetResponse;
         } else {
             if (!this.roomEndUserRepository.existsByIdAndAndUserId(id, userId)) {
                 throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
             }
-            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom);
+            Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(gotRoom, userId);
+            RoomEndUser gotRoomEndUser = roomEndUser.get();
+            List<Space> spaces = gotRoom.getSpaces().stream().filter(space -> {
+                if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_USER)) {
+                    return space.getRole().equals(SpaceRole.SPACEROLE_USER) || space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
+                }
+                if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_GUEST)) {
+                    return space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
+                }
+                return true;
+            }).collect(Collectors.toList());
+            Space firstSpace = getFirstSpace(spaces);
+            while (firstSpace != null) {
+                sortedSpaces.add(firstSpace);
+                firstSpace = firstSpace.getNext();
+            }
+            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom, sortedSpaces);
             return roomGetResponse;
         }
     }
@@ -121,9 +168,18 @@ public class RoomServiceImpl implements RoomService {
         if (!this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
             throw new DataNotFoundException("해당 채널에 가입하지 않았습니다.");
         }
-        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserIdOrderByIndexingAsc(channel.get(), userId);
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserId(channel.get(), userId);
+        RoomEndUser roomEndUser = getFirstRoomEndUser(roomEndUsers);
+        List<RoomEndUser> sortedRoomEndUsers = new ArrayList<>();
+        if (roomEndUser == null) {
+            return RoomListByChannelResponse.makeDto(new ArrayList<>());
+        }
+        while (roomEndUser != null) {
+            sortedRoomEndUsers.add(roomEndUser);
+            roomEndUser = roomEndUser.getNext();
+        }
         List<Room> rooms = new ArrayList<>();
-        for (RoomEndUser r : roomEndUsers) {
+        for (RoomEndUser r : sortedRoomEndUsers) {
             rooms.add(r.getRoom());
         }
 
@@ -147,16 +203,18 @@ public class RoomServiceImpl implements RoomService {
             throw new DuplicateException("이미 가입한 룸입니다.");
         }
         Room gotRoom = room.get();
-        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findTop1ByUserIdOrderByIndexingDesc(userId);
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByUserId(userId);
+        RoomEndUser lastRoomEndUser = getLastRoomEndUser(roomEndUsers);
         RoomEndUser savedRoomEndUser;
         if (gotRoom.getType().equals(RoomType.ROOM_PUBLIC)) {
             RoomEndUser roomEndUser = RoomEndUser.builder()
                     .userId(userId)
                     .room(gotRoom)
                     .owner(false)
-                    .indexing(roomEndUsers.get(0).getIndexing() + 1)
+                    .prev(lastRoomEndUser)
                     .role(RoomRole.ROOM_GUEST)
                     .build();
+            lastRoomEndUser.updateNext(roomEndUser);
             savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
         } else if (!gotRoom.getType().equals(RoomType.ROOM_OPEN)) {
             throw new PermissionDenyException("해당 룸은 초대장을 통해서 가입할 수 있습니다.");
@@ -165,9 +223,10 @@ public class RoomServiceImpl implements RoomService {
                     .userId(userId)
                     .room(gotRoom)
                     .owner(false)
-                    .indexing(roomEndUsers.get(0).getIndexing() + 1)
+                    .prev(lastRoomEndUser)
                     .role(RoomRole.ROOM_USER)
                     .build();
+            lastRoomEndUser.updateNext(roomEndUser);
             savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
         }
         RoomJoinResponse roomJoinResponse = RoomJoinResponse.makeDto(savedRoomEndUser);
@@ -189,7 +248,12 @@ public class RoomServiceImpl implements RoomService {
         if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("룸의 관리자는 룸을 탈퇴할 수 없습니다.");
         }
-        this.roomEndUserRepository.delete(gotRoomEndUser);
+        gotRoomEndUser.getPrev().updateNext(gotRoomEndUser.getNext());
+        if (!Objects.isNull(gotRoomEndUser.getNext())) {
+            gotRoomEndUser.getNext().updatePrev(gotRoomEndUser.getPrev());
+        }
+
+        roomEndUserRepository.delete(gotRoomEndUser);
         // global 룸 아이디 반환
         return room.get().getChannel().getRooms().get(0).getId();
     }
@@ -209,7 +273,7 @@ public class RoomServiceImpl implements RoomService {
             throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
         }
         gotRoom.updateRoom(roomUpdateRequest);
-        roomRepository.save(gotRoom);
+
         return "룸이 수정되었습니다.";
     }
     @Transactional
@@ -226,6 +290,16 @@ public class RoomServiceImpl implements RoomService {
         Room gotRoom = room.get();
         if (!roomEndUser.get().getOwner().equals(userId)) {
             throw new PermissionDenyException("해당 룸의 소유자가 아닙니다.");
+        }
+        for (RoomEndUser user: gotRoom.getUsers()) {
+
+        }
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByRoom(gotRoom);
+        for (RoomEndUser r : roomEndUsers) {
+            r.getPrev().updateNext(r.getNext());
+            if (!Objects.isNull(r.getNext())) {
+                r.getNext().updatePrev(r.getPrev());
+            }
         }
         UUID globalRoomUUID = room.get().getChannel().getRooms().get(0).getId();
         roomRepository.delete(gotRoom);
@@ -245,28 +319,52 @@ public class RoomServiceImpl implements RoomService {
                 .type(roomCreateRequest.type())
                 .build();
         Room savedRoom = this.roomRepository.save(room);
-        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findTop1ByUserIdOrderByIndexingDesc(userId);
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByUserId(userId);
+        RoomEndUser lastRoomEndUser = getLastRoomEndUser(roomEndUsers);
         RoomEndUser roomEndUser = RoomEndUser.builder()
                 .userId(userId)
                 .room(room)
                 .owner(true)
                 .role(RoomRole.ROOM_ADMIN)
-                .indexing(roomEndUsers.get(0).getIndexing() + 1)
+                .prev(lastRoomEndUser)
                 .build();
+        lastRoomEndUser.updateNext(roomEndUser);
+
         this.roomEndUserRepository.save(roomEndUser);
         Space feed = Space.builder()
                 .room(savedRoom)
-                .role(SpaceRole.SPACEROLE_GUEST)
+                .role(roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE) ? SpaceRole.SPACEROLE_USER : SpaceRole.SPACEROLE_GUEST)
+                .title("일반 피드")
+                .description("일반 피드 스페이스")
                 .type(SpaceType.SPACE_FEED)
                 .build();
         this.spaceRepository.save(feed);
         Space chat = Space.builder()
                 .room(savedRoom)
-                .role(SpaceRole.SPACEROLE_GUEST)
+                .role(roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE) ? SpaceRole.SPACEROLE_USER : SpaceRole.SPACEROLE_GUEST)
+                .title("일반 채팅")
+                .description("일반 채팅 스페이스")
                 .type(SpaceType.SPACE_CHAT)
                 .build();
         this.spaceRepository.save(chat);
         return savedRoom;
+    }
+    public RoomEndUser getLastRoomEndUser(List<RoomEndUser> roomEndUsers) {
+        return roomEndUsers.stream().filter(roomEndUser -> Objects.isNull(roomEndUser.getNext()))
+                .findAny().orElse(null);
+
+    }
+    public RoomEndUser getFirstRoomEndUser(List<RoomEndUser> roomEndUsers) {
+        return roomEndUsers.stream().filter(roomEndUser -> Objects.isNull(roomEndUser.getPrev()))
+                .findAny().orElse(null);
+    }
+    public Space getLastSpace(List<Space> spaces) {
+        return spaces.stream().filter(space -> Objects.isNull(space.getNext()))
+                .findAny().orElse(null);
+    }
+    public Space getFirstSpace(List<Space> spaces) {
+        return spaces.stream().filter(space -> Objects.isNull(space.getPrev()))
+                .findAny().orElse(null);
     }
 
 }
