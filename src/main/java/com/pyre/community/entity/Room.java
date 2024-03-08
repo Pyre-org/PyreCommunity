@@ -2,6 +2,7 @@ package com.pyre.community.entity;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.enumeration.RoomType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -56,6 +57,13 @@ public class Room {
         this.users = new ArrayList<>();
         this.spaces = new ArrayList<>();
         this.cAt = LocalDateTime.now();
+    }
+    public void updateRoom(RoomUpdateRequest roomUpdateRequest) {
+        this.title = roomUpdateRequest.title();
+        this.description = roomUpdateRequest.description();
+        this.imageUrl = roomUpdateRequest.imageUrl();
+        this.type = roomUpdateRequest.type();
+        this.mAt = LocalDateTime.now();
     }
 
 }

@@ -2,6 +2,7 @@ package com.pyre.community.controller;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
 import com.pyre.community.dto.request.RoomJoinRequest;
+import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.enumeration.RoomType;
 import com.pyre.community.service.RoomService;
@@ -104,5 +105,42 @@ public class RoomController {
             @RequestBody RoomJoinRequest roomJoinRequest
     ) {
         return new ResponseEntity<>(this.roomService.joinRoom(UUID.fromString(roomId), UUID.fromString(userId), UUID.fromString(roomJoinRequest.channelId())), HttpStatus.OK);
+    }
+    @PostMapping("/leave/{roomId}")
+    @Operation(description = "해당 룸 아이디로 룸을 탈퇴합니다.")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<UUID> leaveRoom(
+            @PathVariable String roomId,
+            @RequestHeader("id") String userId
+    ) {
+        return new ResponseEntity<>(this.roomService.leaveRoom(UUID.fromString(roomId), UUID.fromString(userId)), HttpStatus.OK);
+    }
+    @PutMapping("/update/{roomId}")
+    @Operation(description = "해당 룸 아이디로 룸을 수정합니다.")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> updateRoom(
+            @PathVariable String roomId,
+            @RequestHeader("id") String userId,
+            @RequestBody @Valid RoomUpdateRequest roomUpdateRequest
+    ) {
+        return new ResponseEntity<>(this.roomService.updateRoom(UUID.fromString(roomId), UUID.fromString(userId), roomUpdateRequest), HttpStatus.OK);
+    }
+    @DeleteMapping("/delete/{roomId}")
+    @Operation(description = "해당 룸 아이디로 룸을 삭제합니다.")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<UUID> deleteRoom(
+            @PathVariable String roomId,
+            @RequestHeader("id") String userId
+    ) {
+        return new ResponseEntity<>(this.roomService.deleteRoom(UUID.fromString(roomId), UUID.fromString(userId)), HttpStatus.OK);
     }
 }

@@ -1,6 +1,7 @@
 package com.pyre.community.service.impl;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
+import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.entity.*;
 import com.pyre.community.enumeration.RoomRole;
@@ -172,6 +173,63 @@ public class RoomServiceImpl implements RoomService {
         RoomJoinResponse roomJoinResponse = RoomJoinResponse.makeDto(savedRoomEndUser);
 
         return roomJoinResponse;
+    }
+    @Transactional
+    @Override
+    public UUID leaveRoom(UUID roomId, UUID userId) {
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+        }
+        RoomEndUser gotRoomEndUser = roomEndUser.get();
+        if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("룸의 관리자는 룸을 탈퇴할 수 없습니다.");
+        }
+        this.roomEndUserRepository.delete(gotRoomEndUser);
+        // global 룸 아이디 반환
+        return room.get().getChannel().getRooms().get(0).getId();
+    }
+    @Transactional
+    @Override
+    public String updateRoom(UUID roomId, UUID userId, RoomUpdateRequest roomUpdateRequest) {
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+        }
+        Room gotRoom = room.get();
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) || !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+        }
+        gotRoom.updateRoom(roomUpdateRequest);
+        roomRepository.save(gotRoom);
+        return "룸이 수정되었습니다.";
+    }
+    @Transactional
+    @Override
+    public UUID deleteRoom(UUID roomId, UUID userId) {
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+        }
+        Room gotRoom = room.get();
+        if (!roomEndUser.get().getOwner().equals(userId)) {
+            throw new PermissionDenyException("해당 룸의 소유자가 아닙니다.");
+        }
+        UUID globalRoomUUID = room.get().getChannel().getRooms().get(0).getId();
+        roomRepository.delete(gotRoom);
+        return globalRoomUUID;
     }
 
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {
