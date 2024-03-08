@@ -2,6 +2,7 @@ package com.pyre.community.controller;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
 import com.pyre.community.dto.request.RoomJoinRequest;
+import com.pyre.community.dto.request.RoomLocateRequest;
 import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.enumeration.RoomType;
@@ -142,5 +143,13 @@ public class RoomController {
             @RequestHeader("id") String userId
     ) {
         return new ResponseEntity<>(this.roomService.deleteRoom(UUID.fromString(roomId), UUID.fromString(userId)), HttpStatus.OK);
+    }
+    @PatchMapping("/locate")
+    @Operation(description = "해당 룸 아이디로 룸의 위치를 변경합니다.")
+    public ResponseEntity<String> locateRoom(
+            @RequestHeader("id") String userId,
+            @RequestBody RoomLocateRequest roomLocateRequest
+    ) {
+        return new ResponseEntity<>(this.roomService.locateRoom(UUID.fromString(userId), roomLocateRequest), HttpStatus.OK);
     }
 }

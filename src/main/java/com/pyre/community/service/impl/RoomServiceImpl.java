@@ -1,6 +1,7 @@
 package com.pyre.community.service.impl;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
+import com.pyre.community.dto.request.RoomLocateRequest;
 import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.entity.*;
@@ -189,11 +190,15 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public RoomJoinResponse joinRoom(UUID roomId, UUID userId, UUID channelId) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
+
         if (!channel.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 채널입니다.");
         }
         if (!this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
             throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+        }
+        if (channelEndUserRepository.findByChannelAndUserId(channel.get(), userId).get().getBan().equals(true)) {
+            throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
         }
         Optional<Room> room = this.roomRepository.findById(roomId);
         if (!room.isPresent()) {
@@ -238,11 +243,11 @@ public class RoomServiceImpl implements RoomService {
     public UUID leaveRoom(UUID roomId, UUID userId) {
         Optional<Room> room = this.roomRepository.findById(roomId);
         if (!room.isPresent()) {
-            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
         Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
         if (!roomEndUser.isPresent()) {
-            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
         }
         RoomEndUser gotRoomEndUser = roomEndUser.get();
         if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
@@ -262,11 +267,11 @@ public class RoomServiceImpl implements RoomService {
     public String updateRoom(UUID roomId, UUID userId, RoomUpdateRequest roomUpdateRequest) {
         Optional<Room> room = this.roomRepository.findById(roomId);
         if (!room.isPresent()) {
-            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
         Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
         if (!roomEndUser.isPresent()) {
-            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
         }
         Room gotRoom = room.get();
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
@@ -281,18 +286,15 @@ public class RoomServiceImpl implements RoomService {
     public UUID deleteRoom(UUID roomId, UUID userId) {
         Optional<Room> room = this.roomRepository.findById(roomId);
         if (!room.isPresent()) {
-            throw new DataNotFoundException("존재하지 않는 채널입니다.");
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
         Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
         if (!roomEndUser.isPresent()) {
-            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
         }
         Room gotRoom = room.get();
         if (!roomEndUser.get().getOwner().equals(userId)) {
             throw new PermissionDenyException("해당 룸의 소유자가 아닙니다.");
-        }
-        for (RoomEndUser user: gotRoom.getUsers()) {
-
         }
         List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByRoom(gotRoom);
         for (RoomEndUser r : roomEndUsers) {
@@ -304,6 +306,49 @@ public class RoomServiceImpl implements RoomService {
         UUID globalRoomUUID = room.get().getChannel().getRooms().get(0).getId();
         roomRepository.delete(gotRoom);
         return globalRoomUUID;
+    }
+    @Transactional
+    @Override
+    public String locateRoom(UUID userId, RoomLocateRequest roomLocateRequest) {
+        if (roomLocateRequest.from().equals(roomLocateRequest.to())) {
+            throw new CustomException("이동하려는 룸과 현재 룸이 같습니다.");
+        }
+        Optional<Room> room = this.roomRepository.findById(roomLocateRequest.from());
+        Optional<Room> toRoom = this.roomRepository.findById(roomLocateRequest.to());
+        if (!room.isPresent() || !toRoom.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findByRoomAndUserId(toRoom.get(), userId);
+        if (!roomEndUser.isPresent() || !toRoomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        Channel gotChannel = room.get().getChannel();
+        if (!gotChannel.equals(toRoom.get().getChannel())) {
+            throw new CustomException("해당 룸과 이동하려는 룸의 채널이 다릅니다.");
+        }
+        RoomEndUser gotRoomEndUser = roomEndUser.get();
+        RoomEndUser gotToRoomEndUser = toRoomEndUser.get();
+        RoomEndUser tempPrev = gotRoomEndUser.getPrev();
+        RoomEndUser tempNext = gotRoomEndUser.getNext();
+        if (gotRoomEndUser.getPrev() != null) {
+            gotRoomEndUser.getPrev().updateNext(gotToRoomEndUser);
+        }
+        if (gotRoomEndUser.getNext() != null) {
+            gotRoomEndUser.getNext().updatePrev(gotToRoomEndUser);
+        }
+        gotRoomEndUser.updatePrev(gotToRoomEndUser.getPrev());
+        gotRoomEndUser.updateNext(gotToRoomEndUser.getNext());
+        if (gotToRoomEndUser.getPrev() != null) {
+            gotToRoomEndUser.getPrev().updateNext(gotRoomEndUser);
+        }
+        if (gotToRoomEndUser.getNext() != null) {
+            gotToRoomEndUser.getNext().updatePrev(gotRoomEndUser);
+        }
+        gotToRoomEndUser.updatePrev(tempPrev);
+        gotToRoomEndUser.updateNext(tempNext);
+        return "룸의 위치가 변경되었습니다.";
     }
 
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {

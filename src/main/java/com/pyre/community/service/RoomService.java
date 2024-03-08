@@ -1,6 +1,7 @@
 package com.pyre.community.service;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
+import com.pyre.community.dto.request.RoomLocateRequest;
 import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.dto.response.*;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,4 +28,6 @@ public interface RoomService {
     String updateRoom(UUID roomId, UUID userId, RoomUpdateRequest roomUpdateRequest);
     @Transactional
     UUID deleteRoom(UUID roomId, UUID userId);
+    @Transactional
+    String locateRoom(UUID userId, RoomLocateRequest roomLocateRequest);
 }
