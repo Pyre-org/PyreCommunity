@@ -146,6 +146,9 @@ public class RoomController {
     }
     @PatchMapping("/locate")
     @Operation(description = "해당 룸 아이디로 룸의 위치를 변경합니다.")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
     public ResponseEntity<String> locateRoom(
             @RequestHeader("id") String userId,
             @RequestBody RoomLocateRequest roomLocateRequest

@@ -1,6 +1,7 @@
 package com.pyre.community.controller;
 
 import com.pyre.community.dto.request.SpaceCreateRequest;
+import com.pyre.community.dto.request.SpaceLocateRequest;
 import com.pyre.community.dto.request.SpaceUpdateRequest;
 import com.pyre.community.dto.response.SpaceCreateResponse;
 import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
@@ -84,5 +85,17 @@ public class SpaceController {
             @PathVariable("spaceId") String roomId
     ) {
         return new ResponseEntity<>(this.spaceService.deleteSpace(UUID.fromString(userId), roomId), HttpStatus.OK);
+    }
+    @PatchMapping("/locate")
+    @Operation(description = "스페이스의 위치를 변경하는 엔드포인트")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> locateSpaceByRoom(
+            @RequestHeader("id") String userId,
+            @RequestBody SpaceLocateRequest spaceLocateRequest
+    ) {
+        return new ResponseEntity<>(this.spaceService.locateSpace(UUID.fromString(userId), spaceLocateRequest), HttpStatus.OK);
     }
 }

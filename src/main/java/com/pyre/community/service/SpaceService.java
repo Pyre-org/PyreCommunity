@@ -1,6 +1,7 @@
 package com.pyre.community.service;
 
 import com.pyre.community.dto.request.SpaceCreateRequest;
+import com.pyre.community.dto.request.SpaceLocateRequest;
 import com.pyre.community.dto.request.SpaceUpdateRequest;
 import com.pyre.community.dto.response.SpaceCreateResponse;
 import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
@@ -20,5 +21,7 @@ public interface SpaceService {
     String updateSpace(UUID userId, String spaceId, SpaceUpdateRequest spaceUpdateRequest);
     @Transactional
     String deleteSpace(UUID userId, String spaceId);
+    @Transactional
+    String locateSpace(UUID userId, SpaceLocateRequest spaceLocateRequest);
 
 }

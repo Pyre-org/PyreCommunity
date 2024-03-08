@@ -1,16 +1,15 @@
 package com.pyre.community.service.impl;
 
 import com.pyre.community.dto.request.SpaceCreateRequest;
+import com.pyre.community.dto.request.SpaceLocateRequest;
 import com.pyre.community.dto.request.SpaceUpdateRequest;
 import com.pyre.community.dto.response.SpaceCreateResponse;
 import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
 import com.pyre.community.dto.response.SpaceGetResponse;
-import com.pyre.community.entity.ChannelEndUser;
-import com.pyre.community.entity.Room;
-import com.pyre.community.entity.RoomEndUser;
-import com.pyre.community.entity.Space;
+import com.pyre.community.entity.*;
 import com.pyre.community.enumeration.RoomRole;
 import com.pyre.community.enumeration.SpaceRole;
+import com.pyre.community.exception.customexception.CustomException;
 import com.pyre.community.exception.customexception.DataNotFoundException;
 import com.pyre.community.exception.customexception.PermissionDenyException;
 import com.pyre.community.repository.*;
@@ -173,6 +172,38 @@ public class SpaceServiceImpl implements SpaceService {
         spaceRepository.delete(space);
         return "스페이스가 삭제되었습니다.";
     }
+    @Transactional
+    @Override
+    public String locateSpace(UUID userId, SpaceLocateRequest spaceLocateRequest) {
+        if (spaceLocateRequest.from().equals(spaceLocateRequest.to())) {
+            throw new CustomException("이동하려는 스페이스와 현재 스페이스가 같습니다.");
+        }
+        Optional<Space> space = this.spaceRepository.findById(spaceLocateRequest.from());
+        Optional<Space> toSpace = this.spaceRepository.findById(spaceLocateRequest.to());
+        if (!space.isPresent() || !toSpace.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 스페이스입니다.");
+        }
+        Optional<Room> room = this.roomRepository.findById(space.get().getRoom().getId());
+        Optional<Room> toRoom = this.roomRepository.findById(toSpace.get().getRoom().getId());
+        if (!room.isPresent() || !toRoom.isPresent()) {
+            throw new DataNotFoundException("해당 룸은 존재하지 않습니다.");
+        }
+        Room gotRoom = room.get();
+        Room gotToRoom = toRoom.get();
+        if (!gotRoom.equals(gotToRoom)) {
+            throw new CustomException("해당 스페이스와 이동하려는 스페이스의 룸이 다릅니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(gotRoom, userId);
+
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("해당 룸의 모더나 관리자가 아닙니다.");
+        }
+        moveSpace(space, toSpace);
+        return "스페이스의 위치가 변경되었습니다.";
+    }
 
     private Space getLastSpace(Room room) {
         List<Space> spaces = spaceRepository.findAllByRoom(room);
@@ -183,6 +214,28 @@ public class SpaceServiceImpl implements SpaceService {
         List<Space> spaces = spaceRepository.findAllByRoom(room);
         Space firstSpace = spaces.stream().map(Space::getPrev).filter(prev -> prev == null).findFirst().orElse(null);
         return firstSpace;
+    }
+    private void moveSpace(Optional<Space> space, Optional<Space> toSpace) {
+        Space gotSpace = space.get();
+        Space gotToSpace = toSpace.get();
+        Space tempPrev = gotSpace.getPrev();
+        Space tempNext = gotSpace.getNext();
+        if (gotSpace.getPrev() != null) {
+            gotSpace.getPrev().updateNext(gotToSpace);
+        }
+        if (gotSpace.getNext() != null) {
+            gotSpace.getNext().updatePrev(gotToSpace);
+        }
+        gotSpace.updatePrev(gotToSpace.getPrev());
+        gotSpace.updateNext(gotToSpace.getNext());
+        if (gotToSpace.getPrev() != null) {
+            gotToSpace.getPrev().updateNext(gotSpace);
+        }
+        if (gotToSpace.getNext() != null) {
+            gotToSpace.getNext().updatePrev(gotSpace);
+        }
+        gotToSpace.updatePrev(tempPrev);
+        gotToSpace.updateNext(tempNext);
     }
 
 }
