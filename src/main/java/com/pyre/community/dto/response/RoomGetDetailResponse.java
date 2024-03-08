@@ -1,6 +1,7 @@
 package com.pyre.community.dto.response;
 
 import com.pyre.community.entity.Room;
+import com.pyre.community.entity.Space;
 import com.pyre.community.enumeration.RoomType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -29,7 +30,8 @@ public record RoomGetDetailResponse(
         SpaceGetListByRoomResponse spaces
 ) {
     public static RoomGetDetailResponse makeDto(
-            Room room
+            Room room,
+            List<Space> spaces
     ) {
         RoomGetDetailResponse dto = new RoomGetDetailResponse(
                 room.getId(),
@@ -40,7 +42,7 @@ public record RoomGetDetailResponse(
                 room.getUsers().size(),
                 room.getSpaces().size(),
                 room.getCAt().format(DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm")),
-                SpaceGetListByRoomResponse.makeDto(room.getSpaces())
+                SpaceGetListByRoomResponse.makeDto(spaces)
         );
         return dto;
     }
