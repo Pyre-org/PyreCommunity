@@ -205,7 +205,7 @@ public class RoomServiceImpl implements RoomService {
             throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
         }
         Room gotRoom = room.get();
-        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) || !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
         }
         gotRoom.updateRoom(roomUpdateRequest);
