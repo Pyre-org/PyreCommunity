@@ -58,71 +58,25 @@ public class RoomServiceImpl implements RoomService {
     }
     @Transactional(readOnly = true)
     @Override
-    public RoomGetDetailResponse getRoom(UUID id, UUID userId) {
+    public RoomGetResponse getRoom(UUID id, UUID userId) {
         Optional<Room> room = this.roomRepository.findById(id);
         if (!room.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 룸 입니다.");
         }
         Room gotRoom = room.get();
-        List<Space> sortedSpaces = new ArrayList<>();
         if (
                 gotRoom.getType().equals(RoomType.ROOM_PUBLIC) ||
                         gotRoom.getType().equals(RoomType.ROOM_OPEN) ||
                         gotRoom.getType().equals(RoomType.ROOM_CAPTURE) ||
                         gotRoom.getType().equals(RoomType.ROOM_GLOBAL)
         ) {
-            Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(gotRoom, userId);
-            if (!roomEndUser.isPresent()) {
-                List<Space> spaces = gotRoom.getSpaces().stream().filter(space ->
-                     space.getRole().equals(SpaceRole.SPACEROLE_GUEST)
-                ).collect(Collectors.toList());
-                Space firstSpace = getFirstSpace(spaces);
-                while (firstSpace != null) {
-                    sortedSpaces.add(firstSpace);
-                    firstSpace = firstSpace.getNext();
-                }
-
-            } else {
-                RoomEndUser gotRoomEndUser = roomEndUser.get();
-                List <Space> spaces = gotRoom.getSpaces().stream().filter(space -> {
-                    if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_USER)) {
-                        return space.getRole().equals(SpaceRole.SPACEROLE_USER) || space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
-                    }
-                    if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_GUEST)) {
-                        return space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
-                    }
-                    return true;
-                }).collect(Collectors.toList());
-
-                Space firstSpace = getFirstSpace(spaces);
-                while (firstSpace != null) {
-                    sortedSpaces.add(firstSpace);
-                    firstSpace = firstSpace.getNext();
-                }
-            }
-            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom, sortedSpaces);
+            RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
             return roomGetResponse;
         } else {
             if (!this.roomEndUserRepository.existsByIdAndAndUserId(id, userId)) {
                 throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
             }
-            Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(gotRoom, userId);
-            RoomEndUser gotRoomEndUser = roomEndUser.get();
-            List<Space> spaces = gotRoom.getSpaces().stream().filter(space -> {
-                if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_USER)) {
-                    return space.getRole().equals(SpaceRole.SPACEROLE_USER) || space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
-                }
-                if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_GUEST)) {
-                    return space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
-                }
-                return true;
-            }).collect(Collectors.toList());
-            Space firstSpace = getFirstSpace(spaces);
-            while (firstSpace != null) {
-                sortedSpaces.add(firstSpace);
-                firstSpace = firstSpace.getNext();
-            }
-            RoomGetDetailResponse roomGetResponse = RoomGetDetailResponse.makeDto(gotRoom, sortedSpaces);
+            RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
             return roomGetResponse;
         }
     }
@@ -161,7 +115,7 @@ public class RoomServiceImpl implements RoomService {
     }
     @Transactional(readOnly = true)
     @Override
-    public RoomListByChannelResponse listByChannelAndUserIdByIndexing(UUID channelId, UUID userId) {
+    public RoomGetDetailListResponse listByChannelAndUserIdByIndexing(UUID channelId, UUID userId) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
         if (!channel.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 채널입니다.");
@@ -173,7 +127,7 @@ public class RoomServiceImpl implements RoomService {
         RoomEndUser roomEndUser = getFirstRoomEndUser(roomEndUsers);
         List<RoomEndUser> sortedRoomEndUsers = new ArrayList<>();
         if (roomEndUser == null) {
-            return RoomListByChannelResponse.makeDto(new ArrayList<>());
+            RoomGetDetailListResponse.makeDto(new ArrayList<>());
         }
         while (roomEndUser != null) {
             sortedRoomEndUsers.add(roomEndUser);
@@ -183,8 +137,28 @@ public class RoomServiceImpl implements RoomService {
         for (RoomEndUser r : sortedRoomEndUsers) {
             rooms.add(r.getRoom());
         }
-
-        return RoomListByChannelResponse.makeDto(rooms);
+        List<RoomGetDetailResponse> roomGetDetailResponses = new ArrayList<>();
+        for (Room r : rooms) {
+            List<Space> sortedSpaces = new ArrayList<>();
+            Optional<RoomEndUser> roomEndUser2 = roomEndUserRepository.findByRoomAndUserId(r, userId);
+            RoomEndUser gotRoomEndUser = roomEndUser2.get();
+            List<Space> spaces = r.getSpaces().stream().filter(space -> {
+                if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_USER)) {
+                    return space.getRole().equals(SpaceRole.SPACEROLE_USER) || space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
+                }
+                if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_GUEST)) {
+                    return space.getRole().equals(SpaceRole.SPACEROLE_GUEST);
+                }
+                return true;
+            }).collect(Collectors.toList());
+            Space firstSpace = getFirstSpace(spaces);
+            while (firstSpace != null) {
+                sortedSpaces.add(firstSpace);
+                firstSpace = firstSpace.getNext();
+            }
+            roomGetDetailResponses.add(RoomGetDetailResponse.makeDto(r, sortedSpaces));
+        }
+        return RoomGetDetailListResponse.makeDto(roomGetDetailResponses);
     }
     @Transactional
     @Override

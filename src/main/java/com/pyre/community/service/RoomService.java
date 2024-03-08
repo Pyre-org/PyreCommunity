@@ -13,13 +13,13 @@ public interface RoomService {
     @Transactional
     RoomCreateResponse createRoom(UUID userId, RoomCreateRequest roomCreateRequest);
     @Transactional(readOnly = true)
-    RoomGetDetailResponse getRoom(UUID id, UUID userId);
+    RoomGetResponse getRoom(UUID id, UUID userId);
     @Transactional(readOnly = true)
     RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type);
     @Transactional(readOnly = true)
     RoomListByChannelResponse listByChannelAndKeywordAndUserId(UUID channelId, String keyword, UUID userId);
     @Transactional(readOnly = true)
-    RoomListByChannelResponse listByChannelAndUserIdByIndexing(UUID channelId, UUID userId);
+    RoomGetDetailListResponse listByChannelAndUserIdByIndexing(UUID channelId, UUID userId);
     @Transactional
     RoomJoinResponse joinRoom(UUID roomId, UUID userId, UUID channelId);
     @Transactional

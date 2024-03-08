@@ -42,17 +42,17 @@ public class RoomController {
     ) {
         return new ResponseEntity<>(this.roomService.createRoom(UUID.fromString(token), roomCreateRequest), HttpStatus.OK);
     }
-    @GetMapping("/get/{id}")
+    @GetMapping("/get/{roomId}")
     @Operation(description = "공개된, 오픈된, 소속된 룸 정보 가져오기 검색 전용")
     @Parameters({
             @Parameter(name = "id", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
-    public ResponseEntity<RoomGetDetailResponse> getRoom(
-            @PathVariable String id,
+    public ResponseEntity<RoomGetResponse> getRoom(
+            @PathVariable String roomId,
             @RequestHeader("id") String userId
     ) {
-        return new ResponseEntity<>(this.roomService.getRoom(UUID.fromString(id), UUID.fromString(userId)), HttpStatus.OK);
+        return new ResponseEntity<>(this.roomService.getRoom(UUID.fromString(roomId), UUID.fromString(userId)), HttpStatus.OK);
     }
     @GetMapping("/list/{channelId}")
     @Operation(description = "채널의 공개된, 오픈된 모든 룸 가져오기 검색 전용")
@@ -88,7 +88,7 @@ public class RoomController {
             @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "dqweqwd-asdcvcv-sdfsd"),
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
-    public ResponseEntity<RoomListByChannelResponse> listByChannelAndKeywordAndUserId (
+    public ResponseEntity<RoomGetDetailListResponse> listByChannelAndKeywordAndUserId (
             @PathVariable String channelId,
             @RequestHeader("id") String userId
     ) {
