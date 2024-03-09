@@ -11,6 +11,7 @@ public record RoomCreateRequest(
         @NotBlank
         @Schema(description = "룸 이름", example = "리그 1방")
         String title,
+        @NotBlank
         @Schema(description = "룸 설명", example = "리그 오브 레전드의 일반 유저방입니다.")
         String description,
         @NotNull
