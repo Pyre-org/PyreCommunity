@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public record SpaceCreateRequest(
         @Schema(description = "룸 UUID", example = "asdasf-qweqw-czxc")
-        @NotBlank
+        @NotNull
         UUID roomId,
         @NotBlank
         @Schema(description = "스페이스 이름", example = "리그 1방")

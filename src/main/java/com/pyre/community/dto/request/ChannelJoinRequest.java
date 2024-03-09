@@ -10,7 +10,7 @@ public record ChannelJoinRequest(
         @NotNull
         @Schema(description = "채널 UUID", example = "5asd-4123-fvcx")
         UUID channelId,
-        @NotBlank
+        @NotNull
         @Schema(description = "채널 참가 동의", example = "true")
         Boolean agreement
 ) {
