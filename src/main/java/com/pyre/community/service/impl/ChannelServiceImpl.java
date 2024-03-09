@@ -476,6 +476,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .description("채널 공용 채팅")
                 .prev(savedFeed)
                 .build();
+        globalFeed.updateNext(globalChat);
         this.spaceRepository.save(globalChat);
         Space feed = Space.builder()
                 .room(captureRoom)
