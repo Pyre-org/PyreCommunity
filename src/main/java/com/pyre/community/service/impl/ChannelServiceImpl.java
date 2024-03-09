@@ -433,6 +433,21 @@ public class ChannelServiceImpl implements ChannelService {
         gotTarget.updateBan(true);
 
     }
+    @Transactional(readOnly = true)
+    @Override
+    public Boolean isSubscribed(UUID userId, UUID channelId) {
+        Optional<Channel> channel = this.channelRepository.findById(channelId);
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("해당 채널은 존재하지 않습니다.");
+        }
+        Channel gotChannel = channel.get();
+        Optional<ChannelEndUser> channelEndUser = this.channelEndUserRepository.findByChannelAndUserId(gotChannel, userId);
+        if (!channelEndUser.isPresent()) {
+            return false;
+        }
+        return true;
+
+    }
 
     private String localDateToString(LocalDateTime localDateTime) {
         if (localDateTime == null) {

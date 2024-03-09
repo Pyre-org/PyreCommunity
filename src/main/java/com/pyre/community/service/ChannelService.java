@@ -54,5 +54,7 @@ public interface ChannelService {
     void leaveChannel(UUID userId, UUID channelId);
     @Transactional
     void banMember(UUID userId, UUID channelId, UUID targetId);
+    @Transactional(readOnly = true)
+    Boolean isSubscribed(UUID userId, UUID channelId);
 }
 

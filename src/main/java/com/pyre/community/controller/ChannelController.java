@@ -223,4 +223,16 @@ public class ChannelController {
         this.channelService.banMember(UUID.fromString(userId), UUID.fromString(channelId), UUID.fromString(targetId));
         return new ResponseEntity<>("성공적으로 해당 유저가 차단 되었습니다.", HttpStatus.OK);
     }
+    @GetMapping("/isSubscribe/{channelId}")
+    @Operation(description = "채널 구독 확인")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, in = ParameterIn.HEADER, example = "asdwqe-qweqwe-vcxv"),
+            @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "asdwqe-qweqwe-vcxv"),
+    })
+    public ResponseEntity<Boolean> isSubscribed(
+            @RequestHeader("id") String userId,
+            @PathVariable String channelId
+    ) {
+        return new ResponseEntity<>(this.channelService.isSubscribed(UUID.fromString(userId), UUID.fromString(channelId)), HttpStatus.OK);
+    }
 }
