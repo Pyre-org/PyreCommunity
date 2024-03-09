@@ -1,6 +1,7 @@
 package com.pyre.community.service.impl;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
+import com.pyre.community.dto.request.RoomEndUserRoleUpdateRequest;
 import com.pyre.community.dto.request.RoomLocateRequest;
 import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.dto.response.*;
@@ -323,6 +324,29 @@ public class RoomServiceImpl implements RoomService {
         gotToRoomEndUser.updatePrev(tempPrev);
         gotToRoomEndUser.updateNext(tempNext);
         return "룸의 위치가 변경되었습니다.";
+    }
+    @Transactional
+    @Override
+    public String updateUserRole(UUID userId, RoomEndUserRoleUpdateRequest roomEndUserRoleUpdateRequest) {
+        Optional<Room> room = this.roomRepository.findById(roomEndUserRoleUpdateRequest.roomId());
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        Room gotRoom = room.get();
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("해당 룸의 관리자가 아닙니다.");
+        }
+        Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findByRoomAndUserId(room.get(), roomEndUserRoleUpdateRequest.userId());
+        if (!toRoomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 타겟이 룸의 멤버가 아닙니다.");
+        }
+        RoomEndUser gotToRoomEndUser = toRoomEndUser.get();
+        gotToRoomEndUser.updateRole(roomEndUserRoleUpdateRequest.role());
+        return "룸의 유저의 역할이 변경되었습니다.";
     }
 
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {

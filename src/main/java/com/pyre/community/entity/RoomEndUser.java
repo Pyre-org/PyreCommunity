@@ -59,6 +59,9 @@ public class RoomEndUser extends BaseEntity {
     public void updatePrev(RoomEndUser prev) {
         this.prev = prev;
     }
+    public void updateRole(RoomRole role) {
+        this.role = role;
+    }
     public String getChannelTitle() {
         return this.channel.getTitle();
     }

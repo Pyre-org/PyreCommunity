@@ -1,6 +1,7 @@
 package com.pyre.community.service;
 
 import com.pyre.community.dto.request.RoomCreateRequest;
+import com.pyre.community.dto.request.RoomEndUserRoleUpdateRequest;
 import com.pyre.community.dto.request.RoomLocateRequest;
 import com.pyre.community.dto.request.RoomUpdateRequest;
 import com.pyre.community.dto.response.*;
@@ -30,4 +31,6 @@ public interface RoomService {
     UUID deleteRoom(UUID roomId, UUID userId);
     @Transactional
     String locateRoom(UUID userId, RoomLocateRequest roomLocateRequest);
+    @Transactional
+    String updateUserRole(UUID userId, RoomEndUserRoleUpdateRequest roomEndUserRoleUpdateRequest);
 }

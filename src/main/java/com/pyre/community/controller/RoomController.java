@@ -1,9 +1,6 @@
 package com.pyre.community.controller;
 
-import com.pyre.community.dto.request.RoomCreateRequest;
-import com.pyre.community.dto.request.RoomJoinRequest;
-import com.pyre.community.dto.request.RoomLocateRequest;
-import com.pyre.community.dto.request.RoomUpdateRequest;
+import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.enumeration.RoomType;
 import com.pyre.community.service.RoomService;
@@ -155,4 +152,16 @@ public class RoomController {
     ) {
         return new ResponseEntity<>(this.roomService.locateRoom(UUID.fromString(userId), roomLocateRequest), HttpStatus.OK);
     }
+    @PatchMapping("/role")
+    @Operation(description = "해당 룸의 유저의 역할을 변경합니다.")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> updateUserRole(
+            @RequestHeader("id") String userId,
+            @RequestBody RoomEndUserRoleUpdateRequest roomEndUserRoleUpdateRequest
+    ) {
+        return new ResponseEntity<>(this.roomService.updateUserRole(UUID.fromString(userId), roomEndUserRoleUpdateRequest), HttpStatus.OK);
+    }
+
 }
