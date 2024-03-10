@@ -12,6 +12,10 @@ public record SpaceGetResponse (
         UUID id,
         @Schema(description = "룸 UUID", example = "asdasf-qweqw-czxc")
         UUID roomId,
+        @Schema(description = "스페이스 이름", example = "오버워치")
+        String title,
+        @Schema(description = "스페이스 설명", example = "오버워치 게임 스페이스")
+        String description,
         @Schema(description = "스페이스 타입", example = "SPACE_FEED")
         SpaceType type,
         @Schema(description = "스페이스 역할", example = "SPACEROLE_GUEST")
@@ -25,6 +29,8 @@ public record SpaceGetResponse (
         return new SpaceGetResponse(
                 space.getId(),
                 space.getRoom().getId(),
+                space.getTitle(),
+                space.getDescription(),
                 space.getType(),
                 space.getRole(),
                 space.getPrev() == null ? null : space.getPrev().getId(),
