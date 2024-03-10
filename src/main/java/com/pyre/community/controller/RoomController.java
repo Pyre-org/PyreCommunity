@@ -163,7 +163,7 @@ public class RoomController {
     ) {
         return new ResponseEntity<>(this.roomService.updateUserRole(UUID.fromString(userId), roomEndUserRoleUpdateRequest), HttpStatus.OK);
     }
-    @GetMapping("/isSubscribe/{channelId}")
+    @GetMapping("/isSubscribe/{roomId}")
     @Operation(description = "룸 구독 확인")
     @Parameters({
             @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, in = ParameterIn.HEADER, example = "asdwqe-qweqwe-vcxv"),
