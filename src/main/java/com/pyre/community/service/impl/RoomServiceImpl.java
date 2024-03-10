@@ -74,7 +74,7 @@ public class RoomServiceImpl implements RoomService {
             RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
             return roomGetResponse;
         } else {
-            if (!this.roomEndUserRepository.existsByIdAndAndUserId(id, userId)) {
+            if (!this.roomEndUserRepository.existsByRoomAndUserId(room.get(), userId)) {
                 throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
             }
             RoomGetResponse roomGetResponse = RoomGetResponse.makeDto(gotRoom);
@@ -179,7 +179,7 @@ public class RoomServiceImpl implements RoomService {
         if (!room.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
-        if (this.roomEndUserRepository.existsByRoomAndAndUserId(room.get(), userId)) {
+        if (this.roomEndUserRepository.existsByRoomAndUserId(room.get(), userId)) {
             throw new DuplicateException("이미 가입한 룸입니다.");
         }
         Room gotRoom = room.get();
@@ -193,6 +193,7 @@ public class RoomServiceImpl implements RoomService {
                     .owner(false)
                     .prev(lastRoomEndUser)
                     .role(RoomRole.ROOM_GUEST)
+                    .channel(channel.get())
                     .build();
             lastRoomEndUser.updateNext(roomEndUser);
             savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
@@ -205,6 +206,7 @@ public class RoomServiceImpl implements RoomService {
                     .owner(false)
                     .prev(lastRoomEndUser)
                     .role(RoomRole.ROOM_USER)
+                    .channel(channel.get())
                     .build();
             lastRoomEndUser.updateNext(roomEndUser);
             savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
@@ -348,6 +350,15 @@ public class RoomServiceImpl implements RoomService {
         gotToRoomEndUser.updateRole(roomEndUserRoleUpdateRequest.role());
         return "룸의 유저의 역할이 변경되었습니다.";
     }
+    @Transactional(readOnly = true)
+    @Override
+    public Boolean isSubscribed(UUID userId, UUID roomId) {
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        return this.roomEndUserRepository.existsByRoomAndUserId(room.get(), userId);
+    }
 
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {
         if (!roomCreateRequest.type().equals(RoomType.ROOM_PUBLIC) && !roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE)
@@ -366,10 +377,11 @@ public class RoomServiceImpl implements RoomService {
         RoomEndUser lastRoomEndUser = getLastRoomEndUser(roomEndUsers);
         RoomEndUser roomEndUser = RoomEndUser.builder()
                 .userId(userId)
-                .room(room)
+                .room(savedRoom)
                 .owner(true)
                 .role(RoomRole.ROOM_ADMIN)
                 .prev(lastRoomEndUser)
+                .channel(channel)
                 .build();
         lastRoomEndUser.updateNext(roomEndUser);
 

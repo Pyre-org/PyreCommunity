@@ -163,5 +163,17 @@ public class RoomController {
     ) {
         return new ResponseEntity<>(this.roomService.updateUserRole(UUID.fromString(userId), roomEndUserRoleUpdateRequest), HttpStatus.OK);
     }
+    @GetMapping("/isSubscribe/{channelId}")
+    @Operation(description = "룸 구독 확인")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, in = ParameterIn.HEADER, example = "asdwqe-qweqwe-vcxv"),
+            @Parameter(name = "roomId", description = "룸 UUID", required = true, in = ParameterIn.PATH, example = "asdwqe-qweqwe-vcxv"),
+    })
+    public ResponseEntity<Boolean> isSubscribed(
+            @RequestHeader("id") String userId,
+            @PathVariable String roomId
+    ) {
+        return new ResponseEntity<>(this.roomService.isSubscribed(UUID.fromString(userId), UUID.fromString(roomId)), HttpStatus.OK);
+    }
 
 }

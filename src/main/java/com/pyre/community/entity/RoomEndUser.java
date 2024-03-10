@@ -44,7 +44,8 @@ public class RoomEndUser extends BaseEntity {
             UUID userId,
             RoomRole role,
             Boolean owner,
-            RoomEndUser prev
+            RoomEndUser prev,
+            Channel channel
     ) {
         this.room = room;
         this.userId = userId;
@@ -52,6 +53,7 @@ public class RoomEndUser extends BaseEntity {
         this.owner = owner;
         this.prev = prev;
         this.next = null;
+        this.channel = channel;
     }
     public void updateNext(RoomEndUser next) {
         this.next = next;

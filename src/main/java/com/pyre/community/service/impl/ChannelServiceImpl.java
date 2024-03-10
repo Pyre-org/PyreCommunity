@@ -312,6 +312,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .owner(false)
                 .userId(userId)
                 .role(RoomRole.ROOM_USER)
+                .channel(gotChannel)
                 .prev(null)
                 .build();
         RoomEndUser savedGlobal = this.roomEndUserRepository.save(global);
@@ -320,6 +321,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .owner(false)
                 .userId(userId)
                 .role(RoomRole.ROOM_USER)
+                .channel(gotChannel)
                 .prev(savedGlobal)
                 .build();
         savedGlobal.updateNext(capture);

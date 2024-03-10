@@ -33,4 +33,6 @@ public interface RoomService {
     String locateRoom(UUID userId, RoomLocateRequest roomLocateRequest);
     @Transactional
     String updateUserRole(UUID userId, RoomEndUserRoleUpdateRequest roomEndUserRoleUpdateRequest);
+    @Transactional(readOnly = true)
+    Boolean isSubscribed(UUID userId, UUID roomId);
 }
