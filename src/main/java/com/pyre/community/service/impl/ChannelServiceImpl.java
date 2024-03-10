@@ -75,7 +75,8 @@ public class ChannelServiceImpl implements ChannelService {
             UUID userId, String token
     ) {
 
-        List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId, Sort.by(Sort.Direction.ASC, "indexing"));
+        List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId, Sort.by(Sort.Direction.ASC, "indexing"))
+                .stream().filter(ce -> ce.getSubscribe().equals(true)).collect(Collectors.toList());
         List<Channel> channels = new ArrayList<>();
         for (ChannelEndUser ce: channelEndUsers) {
             channels.add(ce.getChannel());
@@ -105,9 +106,8 @@ public class ChannelServiceImpl implements ChannelService {
         if (sortBy.equals("memberCounts")) sortBy = "endUsers";
         if (sortBy.equals("roomCounts")) sortBy = "rooms";
 
-
-
-        List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId);
+        List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId)
+                .stream().filter(ce -> ce.getSubscribe().equals(true)).collect(Collectors.toList());
         List<Channel> channels = new ArrayList<>();
         for (ChannelEndUser ce: channelEndUsers) {
             if (genre != null) {
@@ -292,11 +292,14 @@ public class ChannelServiceImpl implements ChannelService {
             throw new DataNotFoundException("해당 채널을 찾을 수 없습니다.");
         }
         if (this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
-            if (channelEndUsers.get(0).getBan().equals(true)) {
+            ChannelEndUser channelEndUser = this.channelEndUserRepository.findByChannelAndUserId(channel.get(), userId).get();
+            if (channelEndUser.getBan().equals(true)) {
                 throw new CustomException("차단 당한 채널은 가입할 수 없습니다.");
             }
-            if (channelEndUsers.get(0).getSubscribe().equals(false)) {
-                channelEndUsers.get(0).updateSubscribe(true);
+            if (channelEndUser.getSubscribe().equals(false)) {
+                channelEndUser.updateSubscribe(true);
+                int indexing = (!channelEndUsers.isEmpty()) ? channelEndUsers.get(0).getIndexing() + 1 : 0;
+                channelEndUser.updateIndexing(indexing);
                 return ChannelJoinResponse.makeDto(channel.get().getId(), request.agreement());
             }
             throw new DuplicateFormatFlagsException("해당 채널에 이미 가입했습니다.");
@@ -455,7 +458,10 @@ public class ChannelServiceImpl implements ChannelService {
         if (!channelEndUser.isPresent()) {
             return false;
         }
-        return true;
+        if (channelEndUser.get().getSubscribe().equals(true)) {
+            return true;
+        }
+        return false;
 
     }
 
