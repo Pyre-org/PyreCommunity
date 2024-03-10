@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -29,10 +30,12 @@ public class ChannelEndUser extends BaseEntity {
     private UUID userId;
     @Enumerated(value = EnumType.STRING)
     private ChannelRole role;
-
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "channelEndUser", cascade = CascadeType.ALL)
+    private List<RoomEndUser> roomEndUsers;
     private Boolean agreement;
     private LocalDateTime joinDate;
     private int indexing;
+    private Boolean subscribe;
     private Boolean ban;
     @Builder
     public ChannelEndUser(
@@ -48,6 +51,7 @@ public class ChannelEndUser extends BaseEntity {
         this.role = ChannelRole.CHANNEL_USER;
         this.indexing = indexing;
         this.joinDate = LocalDateTime.now();
+        this.subscribe = true;
         this.ban = false;
     }
     public void updateIndexing(int indexing) {
@@ -55,5 +59,8 @@ public class ChannelEndUser extends BaseEntity {
     }
     public void updateBan(Boolean ban) {
         this.ban = ban;
+    }
+    public void updateSubscribe(Boolean subscribe) {
+        this.subscribe = subscribe;
     }
 }

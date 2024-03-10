@@ -107,7 +107,7 @@ public class RoomServiceImpl implements RoomService {
         List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserId(channel.get(), userId);
         List<Room> rooms = new ArrayList<>();
         for (RoomEndUser r : roomEndUsers) {
-            if (!r.getRoom().getType().equals(RoomType.ROOM_GLOBAL) && r.getRoom().getType().equals(RoomType.ROOM_CAPTURE)) {
+            if (!r.getRoom().getType().equals(RoomType.ROOM_GLOBAL) && !r.getRoom().getType().equals(RoomType.ROOM_CAPTURE)) {
                 rooms.add(r.getRoom());
             }
         }
@@ -169,10 +169,11 @@ public class RoomServiceImpl implements RoomService {
         if (!channel.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 채널입니다.");
         }
-        if (!this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
-            throw new PermissionDenyException("해당 채널에 가입하지 않았습니다.");
+        Optional<ChannelEndUser> channelEndUser = channelEndUserRepository.findByChannelAndUserId(channel.get(), userId);
+        if (!channelEndUser.isPresent()) {
+            throw new DataNotFoundException("해당 채널이 없거나 해당 채널에 가입하지 않았습니다.");
         }
-        if (channelEndUserRepository.findByChannelAndUserId(channel.get(), userId).get().getBan().equals(true)) {
+        if (channelEndUser.get().getBan().equals(true)) {
             throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
         }
         Optional<Room> room = this.roomRepository.findById(roomId);
@@ -192,6 +193,7 @@ public class RoomServiceImpl implements RoomService {
                     .room(gotRoom)
                     .owner(false)
                     .prev(lastRoomEndUser)
+                    .channelEndUser(channelEndUser.get())
                     .role(RoomRole.ROOM_GUEST)
                     .channel(channel.get())
                     .build();
@@ -205,6 +207,7 @@ public class RoomServiceImpl implements RoomService {
                     .room(gotRoom)
                     .owner(false)
                     .prev(lastRoomEndUser)
+                    .channelEndUser(channelEndUser.get())
                     .role(RoomRole.ROOM_USER)
                     .channel(channel.get())
                     .build();
@@ -373,6 +376,14 @@ public class RoomServiceImpl implements RoomService {
                 .type(roomCreateRequest.type())
                 .build();
         Room savedRoom = this.roomRepository.save(room);
+        Optional<ChannelEndUser> channelEndUser = channelEndUserRepository.findByChannelAndUserId(channel, userId);
+        if (!channelEndUser.isPresent()) {
+            throw new DataNotFoundException("해당 채널이 없거나 해당 채널에 가입하지 않았습니다.");
+        }
+        if (channelEndUser.get().getBan().equals(true)) {
+            throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
+        }
+
         List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByUserId(userId);
         RoomEndUser lastRoomEndUser = getLastRoomEndUser(roomEndUsers);
         RoomEndUser roomEndUser = RoomEndUser.builder()
@@ -381,27 +392,28 @@ public class RoomServiceImpl implements RoomService {
                 .owner(true)
                 .role(RoomRole.ROOM_ADMIN)
                 .prev(lastRoomEndUser)
+                .channelEndUser(channelEndUser.get())
                 .channel(channel)
                 .build();
-        lastRoomEndUser.updateNext(roomEndUser);
-
-        this.roomEndUserRepository.save(roomEndUser);
+        lastRoomEndUser.updateNext(this.roomEndUserRepository.save(roomEndUser));
         Space feed = Space.builder()
                 .room(savedRoom)
                 .role(roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE) ? SpaceRole.SPACEROLE_USER : SpaceRole.SPACEROLE_GUEST)
                 .title("일반 피드")
                 .description("일반 피드 스페이스")
                 .type(SpaceType.SPACE_FEED)
+                .prev(null)
                 .build();
-        this.spaceRepository.save(feed);
+        Space savedFeed = this.spaceRepository.save(feed);
         Space chat = Space.builder()
                 .room(savedRoom)
                 .role(roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE) ? SpaceRole.SPACEROLE_USER : SpaceRole.SPACEROLE_GUEST)
                 .title("일반 채팅")
                 .description("일반 채팅 스페이스")
                 .type(SpaceType.SPACE_CHAT)
+                .prev(savedFeed)
                 .build();
-        this.spaceRepository.save(chat);
+        savedFeed.updateNext(this.spaceRepository.save(chat));
         return savedRoom;
     }
     public RoomEndUser getLastRoomEndUser(List<RoomEndUser> roomEndUsers) {

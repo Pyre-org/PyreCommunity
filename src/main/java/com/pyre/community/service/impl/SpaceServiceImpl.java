@@ -19,10 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -207,12 +204,12 @@ public class SpaceServiceImpl implements SpaceService {
 
     private Space getLastSpace(Room room) {
         List<Space> spaces = spaceRepository.findAllByRoom(room);
-        Space lastSpace = spaces.stream().map(Space::getNext).filter(next -> next == null).findFirst().orElse(null);
+        Space lastSpace = spaces.stream().filter(space -> Objects.isNull(space.getNext())).findAny().orElse(null);
         return lastSpace;
     }
     private Space getFirstSpace(Room room) {
         List<Space> spaces = spaceRepository.findAllByRoom(room);
-        Space firstSpace = spaces.stream().map(Space::getPrev).filter(prev -> prev == null).findFirst().orElse(null);
+        Space firstSpace = spaces.stream().filter(space -> Objects.isNull(space.getPrev())).findAny().orElse(null);
         return firstSpace;
     }
     private void moveSpace(Optional<Space> space, Optional<Space> toSpace) {

@@ -292,6 +292,13 @@ public class ChannelServiceImpl implements ChannelService {
             throw new DataNotFoundException("해당 채널을 찾을 수 없습니다.");
         }
         if (this.channelEndUserRepository.existsByChannelAndUserId(channel.get(), userId)) {
+            if (channelEndUsers.get(0).getBan().equals(true)) {
+                throw new CustomException("차단 당한 채널은 가입할 수 없습니다.");
+            }
+            if (channelEndUsers.get(0).getSubscribe().equals(false)) {
+                channelEndUsers.get(0).updateSubscribe(true);
+                return ChannelJoinResponse.makeDto(channel.get().getId(), request.agreement());
+            }
             throw new DuplicateFormatFlagsException("해당 채널에 이미 가입했습니다.");
         }
         if (!channel.get().getApprovalStatus().equals(ApprovalStatus.ALLOW)) {
@@ -314,6 +321,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .role(RoomRole.ROOM_USER)
                 .channel(gotChannel)
                 .prev(null)
+                .channelEndUser(saveChannelEndUser)
                 .build();
         RoomEndUser savedGlobal = this.roomEndUserRepository.save(global);
         RoomEndUser capture = RoomEndUser.builder()
@@ -322,10 +330,10 @@ public class ChannelServiceImpl implements ChannelService {
                 .userId(userId)
                 .role(RoomRole.ROOM_USER)
                 .channel(gotChannel)
+                .channelEndUser(saveChannelEndUser)
                 .prev(savedGlobal)
                 .build();
-        savedGlobal.updateNext(capture);
-        this.roomEndUserRepository.save(capture);
+        savedGlobal.updateNext(this.roomEndUserRepository.save(capture));
         ChannelJoinResponse channelJoinResponse = ChannelJoinResponse.makeDto(gotChannel.getId(), request.agreement());
         return channelJoinResponse;
     }
@@ -398,14 +406,14 @@ public class ChannelServiceImpl implements ChannelService {
         if (channelEndUser.get().getBan().equals(true)) {
             throw new CustomException("차단 당한 채널은 탈퇴할 수 없습니다.");
         }
+
         List<ChannelEndUser> channelEndUsers = this.channelEndUserRepository.findAllByUserId(userId);
         for (ChannelEndUser c : channelEndUsers) {
             if (c.getIndexing() > channelEndUser.get().getIndexing()) {
                 c.updateIndexing(c.getIndexing()-1);
             }
         }
-
-        this.channelEndUserRepository.delete(channelEndUser.get());
+        channelEndUser.get().updateSubscribe(false);
 
     }
     @Transactional
@@ -493,8 +501,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .description("채널 공용 채팅")
                 .prev(savedFeed)
                 .build();
-        globalFeed.updateNext(globalChat);
-        this.spaceRepository.save(globalChat);
+        globalFeed.updateNext(this.spaceRepository.save(globalChat));
         Space feed = Space.builder()
                 .room(captureRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)

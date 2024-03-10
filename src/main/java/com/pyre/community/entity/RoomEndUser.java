@@ -28,6 +28,11 @@ public class RoomEndUser extends BaseEntity {
     @ToString.Exclude
     @JoinColumn(name = "CHANNEL_ID")
     private Channel channel;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    @JoinColumn(name = "CHANNEL_END_USER_ID")
+    private ChannelEndUser channelEndUser;
     @Column(name = "USER_ID")
     private UUID userId;
     @Enumerated(value = EnumType.STRING)
@@ -45,7 +50,8 @@ public class RoomEndUser extends BaseEntity {
             RoomRole role,
             Boolean owner,
             RoomEndUser prev,
-            Channel channel
+            Channel channel,
+            ChannelEndUser channelEndUser
     ) {
         this.room = room;
         this.userId = userId;
@@ -54,6 +60,7 @@ public class RoomEndUser extends BaseEntity {
         this.prev = prev;
         this.next = null;
         this.channel = channel;
+        this.channelEndUser = channelEndUser;
     }
     public void updateNext(RoomEndUser next) {
         this.next = next;
