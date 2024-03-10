@@ -179,7 +179,7 @@ public class RoomServiceImpl implements RoomService {
         if (!room.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
-        if (this.roomEndUserRepository.existsByIdAndAndUserId(roomId, userId)) {
+        if (this.roomEndUserRepository.existsByRoomAndAndUserId(room.get(), userId)) {
             throw new DuplicateException("이미 가입한 룸입니다.");
         }
         Room gotRoom = room.get();

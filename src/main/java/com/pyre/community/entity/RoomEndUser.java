@@ -16,7 +16,7 @@ public class RoomEndUser extends BaseEntity {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(name = "ROOM_ENDUSER_ID", columnDefinition = "BINARY(16)")
+    @Column(name = "ROOM_END_USER_ID", columnDefinition = "BINARY(16)")
     private UUID id;
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore

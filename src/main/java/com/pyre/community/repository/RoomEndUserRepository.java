@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Repository
 public interface RoomEndUserRepository extends JpaRepository<RoomEndUser, UUID> {
-    Boolean existsByIdAndAndUserId(UUID id, UUID userId);
+    Boolean existsByRoomAndAndUserId(Room room, UUID userId);
     List<RoomEndUser> findAllByChannelAndUserId(Channel channel, UUID userId);
     List<RoomEndUser> findAllByRoom(Room room);
     List<RoomEndUser> findTop1ByUserId(UUID userId);

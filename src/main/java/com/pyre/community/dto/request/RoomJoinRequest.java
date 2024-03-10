@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public record RoomJoinRequest(
         @NotBlank
-        @Schema(description = "룸 UUID", example = "ASDvcxv-q222aSDc-ASDfvc")
+        @Schema(description = "채널 UUID", example = "ASDvcxv-q222aSDc-ASDfvc")
         String channelId
 ) {
 }
