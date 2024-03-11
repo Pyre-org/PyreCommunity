@@ -7,6 +7,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum ChannelGenre {
     GENERAL("GENERAL"),
-    FPS("FPS");
+    FPS("FPS"),
+    RPG("RPG"),
+    SPORTS("SPORTS"),
+    MOBILE("MOBILE"),
+    CASUAL("CASUAL"),
+    SIMULATION("SIMULATION"),
+    ETC("ETC");
     private final String key;
 }
