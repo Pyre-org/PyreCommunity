@@ -180,8 +180,9 @@ public class RoomServiceImpl implements RoomService {
         if (this.roomEndUserRepository.existsByRoomAndUserIdAndIsDeleted(room.get(), userId, false)) {
             throw new DuplicateException("이미 가입한 룸입니다.");
         }
-        if (roomEndUserRepository.findByRoomAndUserIdAndStatusAndIsDeleted(room.get(), userId, RoomEndUserStatus.BANNED, true).isPresent()) {
-            throw new PermissionDenyException("해당 룸에서 차단당한 상태입니다.");
+        Optional<RoomEndUser> bannedUser = roomEndUserRepository.findByRoomAndUserIdAndStatusAndIsDeleted(room.get(), userId, RoomEndUserStatus.BANNED, true);
+        if (bannedUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에서 차단당한 상태입니다. 사유 : " + bannedUser.get().getBanReason());
         }
 
         Room gotRoom = room.get();
