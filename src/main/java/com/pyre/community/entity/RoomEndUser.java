@@ -1,6 +1,7 @@
 package com.pyre.community.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.pyre.community.enumeration.RoomEndUserStatus;
 import com.pyre.community.enumeration.RoomRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -44,6 +45,10 @@ public class RoomEndUser extends BaseEntity {
     private UUID prevId;
     private UUID nextId;
     private Boolean isDeleted;
+    @Enumerated(value = EnumType.STRING)
+    private RoomEndUserStatus status;
+    private String banReason;
+    private String unbanReason;
     @Builder
     public RoomEndUser(
             Room room,
@@ -62,6 +67,7 @@ public class RoomEndUser extends BaseEntity {
         this.nextId = null;
         this.channel = channel;
         this.isDeleted = false;
+        this.status = RoomEndUserStatus.ACTIVE;
         this.channelEndUser = channelEndUser;
     }
     public void updateNext(UUID nextId) {
@@ -75,5 +81,16 @@ public class RoomEndUser extends BaseEntity {
     }
     public void updateIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+    public void banUser(String banReason) {
+        this.status = RoomEndUserStatus.BANNED;
+        this.banReason = banReason;
+        this.unbanReason = null;
+    }
+    public void unbanUser(String unbanReason) {
+        this.status = RoomEndUserStatus.ACTIVE;
+        this.banReason = null;
+        this.unbanReason = unbanReason;
+        this.role = RoomRole.ROOM_USER;
     }
 }

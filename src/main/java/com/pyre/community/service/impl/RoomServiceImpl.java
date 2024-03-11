@@ -1,15 +1,9 @@
 package com.pyre.community.service.impl;
 
-import com.pyre.community.dto.request.RoomCreateRequest;
-import com.pyre.community.dto.request.RoomEndUserRoleUpdateRequest;
-import com.pyre.community.dto.request.RoomLocateRequest;
-import com.pyre.community.dto.request.RoomUpdateRequest;
+import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.entity.*;
-import com.pyre.community.enumeration.RoomRole;
-import com.pyre.community.enumeration.RoomType;
-import com.pyre.community.enumeration.SpaceRole;
-import com.pyre.community.enumeration.SpaceType;
+import com.pyre.community.enumeration.*;
 import com.pyre.community.exception.customexception.CustomException;
 import com.pyre.community.exception.customexception.DataNotFoundException;
 import com.pyre.community.exception.customexception.DuplicateException;
@@ -169,7 +163,6 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public RoomJoinResponse joinRoom(UUID roomId, UUID userId, UUID channelId) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
-
         if (!channel.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 채널입니다.");
         }
@@ -187,37 +180,55 @@ public class RoomServiceImpl implements RoomService {
         if (this.roomEndUserRepository.existsByRoomAndUserIdAndIsDeleted(room.get(), userId, false)) {
             throw new DuplicateException("이미 가입한 룸입니다.");
         }
+        if (roomEndUserRepository.findByRoomAndUserIdAndStatusAndIsDeleted(room.get(), userId, RoomEndUserStatus.BANNED, true).isPresent()) {
+            throw new PermissionDenyException("해당 룸에서 차단당한 상태입니다.");
+        }
+
         Room gotRoom = room.get();
         List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserIdAndIsDeleted(channel.get(), userId, false);
         RoomEndUser lastRoomEndUser = getLastRoomEndUser(roomEndUsers);
         RoomEndUser savedRoomEndUser;
+        Optional<RoomEndUser> deletedUser = roomEndUserRepository.findByRoomAndUserIdAndStatusAndIsDeleted(room.get(), userId, RoomEndUserStatus.ACTIVE, true);
         if (gotRoom.getType().equals(RoomType.ROOM_PUBLIC)) {
-            RoomEndUser roomEndUser = RoomEndUser.builder()
-                    .userId(userId)
-                    .room(gotRoom)
-                    .owner(false)
-                    .prevId(lastRoomEndUser.getId())
-                    .channelEndUser(channelEndUser.get())
-                    .role(RoomRole.ROOM_GUEST)
-                    .channel(channel.get())
-                    .build();
-            savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
-            lastRoomEndUser.updateNext(savedRoomEndUser.getId());
-
+            if (deletedUser.isPresent()) {
+                deletedUser.get().updateIsDeleted(false);
+                deletedUser.get().updatePrev(lastRoomEndUser.getId());
+                lastRoomEndUser.updateNext(deletedUser.get().getId());
+                savedRoomEndUser = deletedUser.get();
+            } else {
+                RoomEndUser roomEndUser = RoomEndUser.builder()
+                        .userId(userId)
+                        .room(gotRoom)
+                        .owner(false)
+                        .prevId(lastRoomEndUser.getId())
+                        .channelEndUser(channelEndUser.get())
+                        .role(RoomRole.ROOM_GUEST)
+                        .channel(channel.get())
+                        .build();
+                savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
+                lastRoomEndUser.updateNext(savedRoomEndUser.getId());
+            }
         } else if (!gotRoom.getType().equals(RoomType.ROOM_OPEN)) {
             throw new PermissionDenyException("해당 룸은 초대장을 통해서 가입할 수 있습니다.");
         } else {
-            RoomEndUser roomEndUser = RoomEndUser.builder()
-                    .userId(userId)
-                    .room(gotRoom)
-                    .owner(false)
-                    .prevId(lastRoomEndUser.getId())
-                    .channelEndUser(channelEndUser.get())
-                    .role(RoomRole.ROOM_USER)
-                    .channel(channel.get())
-                    .build();
-            savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
-            lastRoomEndUser.updateNext(savedRoomEndUser.getId());
+            if (deletedUser.isPresent()) {
+                deletedUser.get().updateIsDeleted(false);
+                deletedUser.get().updatePrev(lastRoomEndUser.getId());
+                lastRoomEndUser.updateNext(deletedUser.get().getId());
+                savedRoomEndUser = deletedUser.get();
+            } else {
+                RoomEndUser roomEndUser = RoomEndUser.builder()
+                        .userId(userId)
+                        .room(gotRoom)
+                        .owner(false)
+                        .prevId(lastRoomEndUser.getId())
+                        .channelEndUser(channelEndUser.get())
+                        .role(RoomRole.ROOM_USER)
+                        .channel(channel.get())
+                        .build();
+                savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
+                lastRoomEndUser.updateNext(savedRoomEndUser.getId());
+            }
         }
         RoomJoinResponse roomJoinResponse = RoomJoinResponse.makeDto(savedRoomEndUser);
 
@@ -305,9 +316,8 @@ public class RoomServiceImpl implements RoomService {
         }
         if (room.get().getType().equals(RoomType.ROOM_GLOBAL) ||
                 room.get().getType().equals(RoomType.ROOM_CAPTURE) ||
-                toRoom.get().getType().equals(RoomType.ROOM_GLOBAL) ||
-                toRoom.get().getType().equals(RoomType.ROOM_CAPTURE)) {
-            throw new PermissionDenyException("공용 룸 또는 캡처 룸은 이동할 수 없습니다.");
+                toRoom.get().getType().equals(RoomType.ROOM_GLOBAL)) {
+            throw new PermissionDenyException("공용 룸 또는 캡처 룸외 다른 장소로 이동할 수 있습니다.");
         }
         Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
         Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(toRoom.get(), userId, false);
@@ -354,6 +364,88 @@ public class RoomServiceImpl implements RoomService {
             throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
         return this.roomEndUserRepository.existsByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
+    }
+    @Transactional
+    @Override
+    public String banUser(UUID userId, RoomEndUserBanRequest roomEndUserBanRequest) {
+        Optional<Room> room = this.roomRepository.findById(roomEndUserBanRequest.roomId());
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        Room gotRoom = room.get();
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+        }
+        Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findById(roomEndUserBanRequest.RoomEndUserId());
+        if (!toRoomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 타겟이 룸의 멤버가 아닙니다.");
+        }
+        if (toRoomEndUser.get().getOwner().equals(toRoomEndUser.get().getUserId())) {
+            throw new PermissionDenyException("해당 유저는 룸의 소유자입니다.");
+        }
+        RoomEndUser gotToRoomEndUser = toRoomEndUser.get();
+        if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
+            if (roomEndUser.get().getOwner().equals(true)) {
+                deleteRoomEndUser(gotToRoomEndUser);
+                gotToRoomEndUser.banUser(roomEndUserBanRequest.reason());
+                return "성공적으로 룸의 관리자가 차단되었습니다.";
+            }
+            throw new PermissionDenyException("관리자나 모더는 관리자를 추방할 수 없습니다.");
+        }
+        if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_MODE)) {
+            if (roomEndUser.get().getOwner().equals(true) ||
+                    roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+                deleteRoomEndUser(gotToRoomEndUser);
+                gotToRoomEndUser.banUser(roomEndUserBanRequest.reason());
+                return "성공적으로 룸의 모더가 차단되었습니다.";
+            }
+            throw new PermissionDenyException("모더는 모더를 추방할 수 없습니다.");
+        }
+        deleteRoomEndUser(gotToRoomEndUser);
+        gotToRoomEndUser.banUser(roomEndUserBanRequest.reason());
+        return "성공적으로 룸의 멤버가 차단되었습니다.";
+    }
+    @Transactional
+    @Override
+    public String unbanUser(UUID userId, RoomEndUserUnbanRequest roomEndUserUnbanRequest) {
+        Optional<Room> room = this.roomRepository.findById(roomEndUserUnbanRequest.roomId());
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        Room gotRoom = room.get();
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+        }
+        Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findById(roomEndUserUnbanRequest.RoomEndUserId());
+        if (!toRoomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 타겟이 룸의 멤버가 아닙니다.");
+        }
+        RoomEndUser gotToRoomEndUser = toRoomEndUser.get();
+        if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
+            if (roomEndUser.get().getOwner().equals(true)) {
+                gotToRoomEndUser.unbanUser(roomEndUserUnbanRequest.reason());
+                return "성공적으로 룸의 관리자가 차단 해제 되었습니다.";
+            }
+            throw new PermissionDenyException("관리자나 모더는 관리자를 차단 해제할 수 없습니다.");
+        }
+        if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_MODE)) {
+            if (roomEndUser.get().getOwner().equals(true) ||
+                    roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+                gotToRoomEndUser.unbanUser(roomEndUserUnbanRequest.reason());
+                return "성공적으로 룸의 모더가 차단 해제 되었습니다.";
+            }
+            throw new PermissionDenyException("모더는 모더를 차단 해제할 수 없습니다.");
+        }
+        gotToRoomEndUser.unbanUser(roomEndUserUnbanRequest.reason());
+        return "성공적으로 룸의 멤버가 차단 해제 되었습니다.";
     }
 
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {
@@ -460,67 +552,21 @@ public class RoomServiceImpl implements RoomService {
     private void locateRoomEndUser(RoomEndUser roomEndUser, RoomEndUser toRoomEndUser) {
         UUID tempPrevId = roomEndUser.getPrevId();
         UUID tempNextId = roomEndUser.getNextId();
-
-        UUID tempToPrevId = toRoomEndUser.getPrevId();
         UUID tempToNextId = toRoomEndUser.getNextId();
         Optional<RoomEndUser> tempPrev;
         Optional<RoomEndUser> tempNext;
-        if (tempNextId != null ? tempNextId.equals(toRoomEndUser.getId()) : false ||
-            tempPrevId != null ? tempPrevId.equals(toRoomEndUser.getId()) : false) {
-            if (tempNextId.equals(toRoomEndUser.getId())) {
-                roomEndUser.updateNext(tempToNextId);
-                roomEndUser.updatePrev(toRoomEndUser.getId());
-                toRoomEndUser.updateNext(roomEndUser.getId());
-                toRoomEndUser.updatePrev(tempPrevId);
-                if (tempPrevId != null) {
-                    tempPrev = roomEndUserRepository.findById(tempPrevId);
-                    if ( tempPrev.isPresent() ) {
-                        tempPrev.get().updateNext(toRoomEndUser.getId());
-                    }
-                }
-                if (tempToNextId != null) {
-                    tempNext = roomEndUserRepository.findById(tempToNextId);
-                    if ( tempNext.isPresent() ) {
-                        tempNext.get().updatePrev(roomEndUser.getId());
-                    }
-                }
-            } else {
-                roomEndUser.updatePrev(tempToPrevId);
-                roomEndUser.updateNext(toRoomEndUser.getId());
-                toRoomEndUser.updatePrev(roomEndUser.getId());
-                toRoomEndUser.updateNext(tempNextId);
-                if (tempNextId != null) {
-                    tempNext = roomEndUserRepository.findById(tempNextId);
-                    if ( tempNext.isPresent() ) {
-                        tempNext.get().updatePrev(toRoomEndUser.getId());
-                    }
-                }
-                if (tempToPrevId != null) {
-                    tempPrev = roomEndUserRepository.findById(tempToPrevId);
-                    if ( tempPrev.isPresent() ) {
-                        tempPrev.get().updateNext(roomEndUser.getId());
-                    }
-                }
-            }
-        } else {
+        if (tempPrevId != null ? tempPrevId.equals(toRoomEndUser.getId()) : false) {
+            throw new CustomException("이동하려는 자리를 이미 차지하고 있습니다.");
+        }
+        if (tempNextId != null ? tempNextId.equals(toRoomEndUser.getId()) : false) {
+            roomEndUser.updateNext(tempToNextId);
+            roomEndUser.updatePrev(toRoomEndUser.getId());
+            toRoomEndUser.updateNext(roomEndUser.getId());
+            toRoomEndUser.updatePrev(tempPrevId);
             if (tempPrevId != null) {
                 tempPrev = roomEndUserRepository.findById(tempPrevId);
                 if ( tempPrev.isPresent() ) {
                     tempPrev.get().updateNext(toRoomEndUser.getId());
-                }
-            }
-            if (tempNextId != null) {
-                tempNext = roomEndUserRepository.findById(tempNextId);
-                if ( tempNext.isPresent() ) {
-                    tempNext.get().updatePrev(toRoomEndUser.getId());
-                }
-            }
-            toRoomEndUser.updatePrev(tempPrevId);
-            toRoomEndUser.updateNext(tempNextId);
-            if (tempToPrevId != null) {
-                tempPrev = roomEndUserRepository.findById(tempToPrevId);
-                if ( tempPrev.isPresent() ) {
-                    tempPrev.get().updateNext(roomEndUser.getId());
                 }
             }
             if (tempToNextId != null) {
@@ -529,7 +575,27 @@ public class RoomServiceImpl implements RoomService {
                     tempNext.get().updatePrev(roomEndUser.getId());
                 }
             }
-            roomEndUser.updatePrev(tempToPrevId);
+        } else {
+            if (tempPrevId != null) {
+                tempPrev = roomEndUserRepository.findById(tempPrevId);
+                if ( tempPrev.isPresent() ) {
+                    tempPrev.get().updateNext(tempNextId);
+                }
+            }
+            if (tempNextId != null) {
+                tempNext = roomEndUserRepository.findById(tempNextId);
+                if ( tempNext.isPresent() ) {
+                    tempNext.get().updatePrev(tempPrevId);
+                }
+            }
+            toRoomEndUser.updateNext(roomEndUser.getId());
+            if (tempToNextId != null) {
+                tempNext = roomEndUserRepository.findById(tempToNextId);
+                if ( tempNext.isPresent() ) {
+                    tempNext.get().updatePrev(roomEndUser.getId());
+                }
+            }
+            roomEndUser.updatePrev(toRoomEndUser.getId());
             roomEndUser.updateNext(tempToNextId);
         }
     }

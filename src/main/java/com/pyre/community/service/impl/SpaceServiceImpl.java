@@ -256,62 +256,18 @@ public class SpaceServiceImpl implements SpaceService {
         UUID tempToNextId = toSpace.getNextId();
         Optional<Space> tempPrev;
         Optional<Space> tempNext;
-        if (tempNextId != null ? tempNextId.equals(toSpace.getId()) : false ||
-               tempPrevId !=null ?  tempPrevId.equals(toSpace.getId()) : false ) {
-            if (tempNextId == toSpace.getId()) {
-                space.updateNext(tempToNextId);
-                toSpace.updateNext(space.getId());
-                space.updatePrev(toSpace.getId());
-                toSpace.updatePrev(tempPrevId);
-                if (tempPrevId != null) {
-                    tempPrev = spaceRepository.findById(tempPrevId);
-                    if ( tempPrev.isPresent() ) {
-                        tempPrev.get().updateNext(toSpace.getId());
-                    }
-                }
-                if (tempToNextId != null) {
-                    tempNext = spaceRepository.findById(tempToNextId);
-                    if ( tempNext.isPresent() ) {
-                        tempNext.get().updatePrev(space.getId());
-                    }
-                }
-            } else {
-                space.updatePrev(tempToPrevId);
-                toSpace.updatePrev(space.getId());
-                space.updateNext(toSpace.getId());
-                toSpace.updateNext(tempNextId);
-                if (tempNextId != null) {
-                    tempNext = spaceRepository.findById(tempNextId);
-                    if ( tempNext.isPresent() ) {
-                        tempNext.get().updatePrev(toSpace.getId());
-                    }
-                }
-                if (tempToPrevId != null) {
-                    tempPrev = spaceRepository.findById(tempToPrevId);
-                    if ( tempPrev.isPresent() ) {
-                        tempPrev.get().updateNext(space.getId());
-                    }
-                }
-            }
-        } else {
+        if (tempPrevId != null ? tempPrevId.equals(toSpace.getId()) : false) {
+            throw new CustomException("이동하려는 자리를 이미 차지하고 있습니다.");
+        }
+        if (tempNextId != null ? tempNextId.equals(toSpace.getId()) : false) {
+            space.updateNext(tempToNextId);
+            space.updatePrev(toSpace.getId());
+            toSpace.updateNext(space.getId());
+            toSpace.updatePrev(tempPrevId);
             if (tempPrevId != null) {
                 tempPrev = spaceRepository.findById(tempPrevId);
                 if ( tempPrev.isPresent() ) {
                     tempPrev.get().updateNext(toSpace.getId());
-                }
-            }
-            if (tempNextId != null) {
-                tempNext = spaceRepository.findById(tempNextId);
-                if ( tempNext.isPresent() ) {
-                    tempNext.get().updatePrev(toSpace.getId());
-                }
-            }
-            toSpace.updatePrev(tempPrevId);
-            toSpace.updateNext(tempNextId);
-            if (tempToPrevId != null) {
-                tempPrev = spaceRepository.findById(tempToPrevId);
-                if ( tempPrev.isPresent() ) {
-                    tempPrev.get().updateNext(space.getId());
                 }
             }
             if (tempToNextId != null) {
@@ -320,7 +276,27 @@ public class SpaceServiceImpl implements SpaceService {
                     tempNext.get().updatePrev(space.getId());
                 }
             }
-            space.updatePrev(tempToPrevId);
+        } else {
+            if (tempPrevId != null) {
+                tempPrev = spaceRepository.findById(tempPrevId);
+                if ( tempPrev.isPresent() ) {
+                    tempPrev.get().updateNext(tempNextId);
+                }
+            }
+            if (tempNextId != null) {
+                tempNext = spaceRepository.findById(tempNextId);
+                if ( tempNext.isPresent() ) {
+                    tempNext.get().updatePrev(tempPrevId);
+                }
+            }
+            toSpace.updateNext(space.getId());
+            if (tempToNextId != null) {
+                tempNext = spaceRepository.findById(tempToNextId);
+                if ( tempNext.isPresent() ) {
+                    tempNext.get().updatePrev(space.getId());
+                }
+            }
+            space.updatePrev(toSpace.getId());
             space.updateNext(tempToNextId);
         }
 

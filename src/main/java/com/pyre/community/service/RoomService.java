@@ -1,9 +1,6 @@
 package com.pyre.community.service;
 
-import com.pyre.community.dto.request.RoomCreateRequest;
-import com.pyre.community.dto.request.RoomEndUserRoleUpdateRequest;
-import com.pyre.community.dto.request.RoomLocateRequest;
-import com.pyre.community.dto.request.RoomUpdateRequest;
+import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,4 +32,8 @@ public interface RoomService {
     String updateUserRole(UUID userId, RoomEndUserRoleUpdateRequest roomEndUserRoleUpdateRequest);
     @Transactional(readOnly = true)
     Boolean isSubscribed(UUID userId, UUID roomId);
+    @Transactional
+    String banUser(UUID userId, RoomEndUserBanRequest roomEndUserBanRequest);
+    @Transactional
+    String unbanUser(UUID userId, RoomEndUserUnbanRequest roomEndUserUnbanRequest);
 }

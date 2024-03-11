@@ -175,5 +175,27 @@ public class RoomController {
     ) {
         return new ResponseEntity<>(this.roomService.isSubscribed(UUID.fromString(userId), UUID.fromString(roomId)), HttpStatus.OK);
     }
+    @DeleteMapping("/ban")
+    @Operation(description = "해당 룸의 유저를 밴합니다.")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> banUser(
+            @RequestHeader("id") String userId,
+            @RequestBody RoomEndUserBanRequest roomEndUserBanRequest
+    ) {
+        return new ResponseEntity<>(this.roomService.banUser(UUID.fromString(userId), roomEndUserBanRequest), HttpStatus.OK);
+    }
+    @PatchMapping("/unban")
+    @Operation(description = "해당 룸의 유저를 언밴합니다.")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> unbanUser(
+            @RequestHeader("id") String userId,
+            @RequestBody RoomEndUserUnbanRequest roomEndUserUnBanRequest
+    ) {
+        return new ResponseEntity<>(this.roomService.unbanUser(UUID.fromString(userId), roomEndUserUnBanRequest), HttpStatus.OK);
+    }
 
 }

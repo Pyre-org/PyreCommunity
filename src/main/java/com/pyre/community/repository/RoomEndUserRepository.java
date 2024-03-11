@@ -3,6 +3,7 @@ package com.pyre.community.repository;
 import com.pyre.community.entity.Channel;
 import com.pyre.community.entity.Room;
 import com.pyre.community.entity.RoomEndUser;
+import com.pyre.community.enumeration.RoomEndUserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,4 +20,5 @@ public interface RoomEndUserRepository extends JpaRepository<RoomEndUser, UUID> 
     List<RoomEndUser> findAllByUserIdAndIsDeleted(UUID userId, Boolean isDeleted);
     Boolean existsByRoomAndUserIdAndIsDeleted(Room room, UUID userId, Boolean isDeleted);
     Optional<RoomEndUser> findByRoomAndUserIdAndIsDeleted(Room room, UUID userId, Boolean isDeleted);
+    Optional<RoomEndUser> findByRoomAndUserIdAndStatusAndIsDeleted(Room room, UUID userId, RoomEndUserStatus status, Boolean isDeleted);
 }
