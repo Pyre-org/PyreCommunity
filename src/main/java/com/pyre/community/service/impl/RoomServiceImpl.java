@@ -512,11 +512,11 @@ public class RoomServiceImpl implements RoomService {
                 .findAny().orElse(null);
     }
     public Space getLastSpace(List<Space> spaces) {
-        return spaces.stream().filter(space -> Objects.isNull(space.getNextId()))
+        return spaces.stream().filter(space -> Objects.isNull(space.getNextId()) && !space.getIsDeleted())
                 .findAny().orElse(null);
     }
     public Space getFirstSpace(List<Space> spaces) {
-        return spaces.stream().filter(space -> Objects.isNull(space.getPrevId()))
+        return spaces.stream().filter(space -> Objects.isNull(space.getPrevId()) && !space.getIsDeleted())
                 .findAny().orElse(null);
     }
     private void deleteRoomEndUser(RoomEndUser roomEndUser) {

@@ -34,7 +34,7 @@ public class SpaceController {
     @Parameters({
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
-    public ResponseEntity<SpaceCreateResponse> createSpace(SpaceCreateRequest spaceCreateRequest, @RequestHeader("id") String userId) {
+    public ResponseEntity<SpaceCreateResponse> createSpace(@RequestBody SpaceCreateRequest spaceCreateRequest, @RequestHeader("id") String userId) {
         return new ResponseEntity<>(this.spaceService.createSpace(spaceCreateRequest, UUID.fromString(userId)), HttpStatus.OK);
     }
     @GetMapping("/list")

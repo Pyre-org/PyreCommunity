@@ -53,8 +53,8 @@ public class SpaceServiceImpl implements SpaceService {
                 .role(SpaceRole.SPACEROLE_USER)
                 .prevId(lastSpace.getId())
                 .build();
-        lastSpace.updateNext(space.getId());
         Space savedSpace = this.spaceRepository.save(space);
+        lastSpace.updateNext(savedSpace.getId());
         SpaceCreateResponse spaceCreateResponse = SpaceCreateResponse.makeDto(savedSpace);
         return spaceCreateResponse;
     }
