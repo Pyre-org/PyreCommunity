@@ -12,10 +12,11 @@ import java.util.UUID;
 
 @Repository
 public interface RoomEndUserRepository extends JpaRepository<RoomEndUser, UUID> {
-    List<RoomEndUser> findAllByChannelAndUserId(Channel channel, UUID userId);
-    List<RoomEndUser> findAllByRoom(Room room);
+    List<RoomEndUser> findAllByChannelAndUserIdAndIsDeleted(Channel channel, UUID userId, Boolean isDeleted);
+    List<RoomEndUser> findAllByRoomAndIsDeleted(Room room, Boolean isDeleted);
     List<RoomEndUser> findTop1ByUserId(UUID userId);
-    List<RoomEndUser> findAllByUserId(UUID userId);
-    Boolean existsByRoomAndUserId(Room room, UUID userId);
-    Optional<RoomEndUser> findByRoomAndUserId(Room room, UUID userId);
+
+    List<RoomEndUser> findAllByUserIdAndIsDeleted(UUID userId, Boolean isDeleted);
+    Boolean existsByRoomAndUserIdAndIsDeleted(Room room, UUID userId, Boolean isDeleted);
+    Optional<RoomEndUser> findByRoomAndUserIdAndIsDeleted(Room room, UUID userId, Boolean isDeleted);
 }

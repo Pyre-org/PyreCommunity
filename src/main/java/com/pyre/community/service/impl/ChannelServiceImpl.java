@@ -175,7 +175,11 @@ public class ChannelServiceImpl implements ChannelService {
 
         Page<Channel> channels = this.channelRepository.findAllByApprovalStatusAndTitleContaining(ApprovalStatus.ALLOW, keyword, pageable);
         if (genre != null) {
-            channels = this.channelRepository.findAllByGenreAndApprovalStatusAndTitleContaining(genre, ApprovalStatus.ALLOW, keyword, pageable);
+            if (genre.equals(ChannelGenre.GENERAL)) {
+                channels = this.channelRepository.findAllByApprovalStatusAndTitleContaining(ApprovalStatus.ALLOW, keyword, pageable);
+            } else {
+                channels = this.channelRepository.findAllByGenreAndApprovalStatusAndTitleContaining(genre, ApprovalStatus.ALLOW, keyword, pageable);
+            }
         }
 
         ChannelGetAllViewDto channelGetViewDtos = new ChannelGetAllViewDto(channels.getTotalElements(), new ArrayList<>());
@@ -323,7 +327,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .userId(userId)
                 .role(RoomRole.ROOM_USER)
                 .channel(gotChannel)
-                .prev(null)
+                .prevId(null)
                 .channelEndUser(saveChannelEndUser)
                 .build();
         RoomEndUser savedGlobal = this.roomEndUserRepository.save(global);
@@ -334,9 +338,9 @@ public class ChannelServiceImpl implements ChannelService {
                 .role(RoomRole.ROOM_USER)
                 .channel(gotChannel)
                 .channelEndUser(saveChannelEndUser)
-                .prev(savedGlobal)
+                .prevId(savedGlobal.getId())
                 .build();
-        savedGlobal.updateNext(this.roomEndUserRepository.save(capture));
+        savedGlobal.updateNext(this.roomEndUserRepository.save(capture).getId());
         ChannelJoinResponse channelJoinResponse = ChannelJoinResponse.makeDto(gotChannel.getId(), request.agreement());
         return channelJoinResponse;
     }
@@ -496,7 +500,7 @@ public class ChannelServiceImpl implements ChannelService {
                 .type(SpaceType.SPACE_FEED)
                 .title("공용 피드")
                 .description("채널 공용 피드")
-                .prev(null)
+                .prevId(null)
                 .build();
         Space savedFeed = this.spaceRepository.save(globalFeed);
         Space globalChat = Space.builder()
@@ -505,16 +509,16 @@ public class ChannelServiceImpl implements ChannelService {
                 .type(SpaceType.SPACE_CHAT)
                 .title("공용 채팅")
                 .description("채널 공용 채팅")
-                .prev(savedFeed)
+                .prevId(savedFeed.getId())
                 .build();
-        globalFeed.updateNext(this.spaceRepository.save(globalChat));
+        globalFeed.updateNext(this.spaceRepository.save(globalChat).getId());
         Space feed = Space.builder()
                 .room(captureRoom)
                 .role(SpaceRole.SPACEROLE_GUEST)
                 .type(SpaceType.SPACE_FEED)
                 .title("방금 캡처 됨")
                 .description("방금 캡처된 사진이 올라옵니다.")
-                .prev(null)
+                .prevId(null)
                 .build();
         this.spaceRepository.save(feed);
     }

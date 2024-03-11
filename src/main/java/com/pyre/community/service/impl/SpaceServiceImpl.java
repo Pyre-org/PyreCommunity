@@ -37,7 +37,7 @@ public class SpaceServiceImpl implements SpaceService {
         if (!room.isPresent()) {
             throw new DataNotFoundException("해당 룸은 존재하지 않습니다.");
         }
-        Optional<RoomEndUser> roomEndUser = this.roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        Optional<RoomEndUser> roomEndUser = this.roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
         if (!roomEndUser.isPresent()) {
             throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
         }
@@ -51,9 +51,9 @@ public class SpaceServiceImpl implements SpaceService {
                 .description(spaceCreateRequest.description())
                 .type(spaceCreateRequest.type())
                 .role(SpaceRole.SPACEROLE_USER)
-                .prev(lastSpace)
+                .prevId(lastSpace.getId())
                 .build();
-        lastSpace.updateNext(space);
+        lastSpace.updateNext(space.getId());
         Space savedSpace = this.spaceRepository.save(space);
         SpaceCreateResponse spaceCreateResponse = SpaceCreateResponse.makeDto(savedSpace);
         return spaceCreateResponse;
@@ -65,16 +65,18 @@ public class SpaceServiceImpl implements SpaceService {
         if (!room.isPresent()) {
             throw new DataNotFoundException("해당 룸은 존재하지 않습니다.");
         }
-        Optional<RoomEndUser> roomEndUser = this.roomEndUserRepository.findByRoomAndUserId(room.get(), userId);
+        Optional<RoomEndUser> roomEndUser = this.roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
         if (!roomEndUser.isPresent()) {
             throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
         }
 
         Space firstSpace = getFirstSpace(room.get());
+        UUID spaceId = firstSpace.getId();
         List<Space> sortedSpaces = new ArrayList<>();
-        while (firstSpace != null) {
-            sortedSpaces.add(firstSpace);
-            firstSpace = firstSpace.getNext();
+        while (spaceId != null) {
+            Space space = spaceRepository.findById(spaceId).orElseThrow(() -> new DataNotFoundException("해당 스페이스는 존재하지 않습니다."));
+            sortedSpaces.add(space);
+            spaceId = space.getNextId();
         }
         List<Space> filteredSpaces;
         SpaceGetListByRoomResponse spaceGetListByRoomResponse;
@@ -112,8 +114,10 @@ public class SpaceServiceImpl implements SpaceService {
     public SpaceGetResponse getSpace(UUID userId, String spaceId) {
         Space space = spaceRepository.findById(UUID.fromString(spaceId)).orElseThrow(() -> new DataNotFoundException("해당 스페이스는 존재하지 않습니다."));
         Room room = space.getRoom();
-        RoomEndUser roomEndUser = roomEndUserRepository.findByRoomAndUserId(room, userId).orElseThrow(() -> new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다."));
-
+        RoomEndUser roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, userId, false).orElseThrow(() -> new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다."));
+        if (space.getIsDeleted()) {
+            throw new DataNotFoundException("해당 스페이스는 존재하지 않습니다.");
+        }
         if (space.getRole().equals(SpaceRole.SPACEROLE_GUEST)) {
             return SpaceGetResponse.makeDto(space);
         } else if (space.getRole().equals(SpaceRole.SPACEROLE_USER)) {
@@ -132,13 +136,16 @@ public class SpaceServiceImpl implements SpaceService {
     @Override
     public String updateSpace(UUID userId, String spaceId, SpaceUpdateRequest spaceUpdateRequest) {
         Space space = spaceRepository.findById(UUID.fromString(spaceId)).orElseThrow(() -> new DataNotFoundException("해당 스페이스는 존재하지 않습니다."));
+        if (space.getIsDeleted()) {
+            throw new DataNotFoundException("해당 스페이스는 존재하지 않습니다.");
+        }
         Room room = space.getRoom();
-        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room, userId);
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, userId, false);
         if (!roomEndUser.isPresent()) {
             throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
         }
         RoomEndUser gotRoomEndUser = roomEndUser.get();
-        if (!gotRoomEndUser.getRole().equals(RoomRole.ROOM_MODE) && !roomEndUserRepository.findByRoomAndUserId(room, userId).get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+        if (!gotRoomEndUser.getRole().equals(RoomRole.ROOM_MODE) && !roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, userId, false).get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 모더나 어드민이 아닙니다.");
         }
         space.updateSpace(spaceUpdateRequest);
@@ -148,25 +155,20 @@ public class SpaceServiceImpl implements SpaceService {
     @Override
     public String deleteSpace(UUID userId, String spaceId) {
         Space space = spaceRepository.findById(UUID.fromString(spaceId)).orElseThrow(() -> new DataNotFoundException("해당 스페이스는 존재하지 않습니다."));
+        if (space.getIsDeleted()) {
+            throw new DataNotFoundException("해당 스페이스는 존재하지 않습니다.");
+        }
         Room room = space.getRoom();
-        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(room, userId);
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, userId, false);
         if (!roomEndUser.isPresent()) {
             throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
         }
         RoomEndUser gotRoomEndUser = roomEndUser.get();
-        if (!gotRoomEndUser.getRole().equals(RoomRole.ROOM_MODE) && !roomEndUserRepository.findByRoomAndUserId(room, userId).get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+        if (!gotRoomEndUser.getRole().equals(RoomRole.ROOM_MODE) && !roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, userId, false).get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 모더나 어드민이 아닙니다.");
         }
-        Space prevSpace = space.getPrev();
-        Space nextSpace = space.getNext();
-        if (prevSpace != null) {
-            prevSpace.updateNext(nextSpace);
-        }
-        if (nextSpace != null) {
-            nextSpace.updatePrev(prevSpace);
-        }
+        deleteSpace(space);
 
-        spaceRepository.delete(space);
         return "스페이스가 삭제되었습니다.";
     }
     @Transactional
@@ -177,7 +179,7 @@ public class SpaceServiceImpl implements SpaceService {
         }
         Optional<Space> space = this.spaceRepository.findById(spaceLocateRequest.from());
         Optional<Space> toSpace = this.spaceRepository.findById(spaceLocateRequest.to());
-        if (!space.isPresent() || !toSpace.isPresent()) {
+        if (!space.isPresent() || !toSpace.isPresent() || space.get().getIsDeleted() || toSpace.get().getIsDeleted()) {
             throw new DataNotFoundException("존재하지 않는 스페이스입니다.");
         }
         Optional<Room> room = this.roomRepository.findById(space.get().getRoom().getId());
@@ -190,7 +192,7 @@ public class SpaceServiceImpl implements SpaceService {
         if (!gotRoom.equals(gotToRoom)) {
             throw new CustomException("해당 스페이스와 이동하려는 스페이스의 룸이 다릅니다.");
         }
-        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserId(gotRoom, userId);
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(gotRoom, userId, false);
 
         if (!roomEndUser.isPresent()) {
             throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
@@ -198,41 +200,129 @@ public class SpaceServiceImpl implements SpaceService {
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 모더나 관리자가 아닙니다.");
         }
-        moveSpace(space, toSpace);
+        moveSpace(space.get(), toSpace.get());
         return "스페이스의 위치가 변경되었습니다.";
     }
 
     private Space getLastSpace(Room room) {
-        List<Space> spaces = spaceRepository.findAllByRoom(room);
-        Space lastSpace = spaces.stream().filter(space -> Objects.isNull(space.getNext())).findAny().orElse(null);
+        List<Space> spaces = spaceRepository.findAllByRoomAndIsDeleted(room, false);
+        Space lastSpace = spaces.stream().filter(space -> Objects.isNull(space.getNextId())).findAny().orElse(null);
         return lastSpace;
     }
     private Space getFirstSpace(Room room) {
-        List<Space> spaces = spaceRepository.findAllByRoom(room);
-        Space firstSpace = spaces.stream().filter(space -> Objects.isNull(space.getPrev())).findAny().orElse(null);
+        List<Space> spaces = spaceRepository.findAllByRoomAndIsDeleted(room, false);
+        Space firstSpace = spaces.stream().filter(space -> Objects.isNull(space.getPrevId())).findAny().orElse(null);
         return firstSpace;
     }
-    private void moveSpace(Optional<Space> space, Optional<Space> toSpace) {
-        Space gotSpace = space.get();
-        Space gotToSpace = toSpace.get();
-        Space tempPrev = gotSpace.getPrev();
-        Space tempNext = gotSpace.getNext();
-        if (gotSpace.getPrev() != null) {
-            gotSpace.getPrev().updateNext(gotToSpace);
-        }
-        if (gotSpace.getNext() != null) {
-            gotSpace.getNext().updatePrev(gotToSpace);
-        }
-        gotSpace.updatePrev(gotToSpace.getPrev());
-        gotSpace.updateNext(gotToSpace.getNext());
-        if (gotToSpace.getPrev() != null) {
-            gotToSpace.getPrev().updateNext(gotSpace);
-        }
-        if (gotToSpace.getNext() != null) {
-            gotToSpace.getNext().updatePrev(gotSpace);
-        }
-        gotToSpace.updatePrev(tempPrev);
-        gotToSpace.updateNext(tempNext);
-    }
+    private void deleteSpace(Space space) {
 
+        Optional<Space> tempPrev;
+        Optional<Space> tempNext;
+        if (space.getPrevId() != null) {
+            tempPrev = spaceRepository.findById(space.getPrevId());
+            if (space.getNextId() != null) {
+                tempNext = spaceRepository.findById(space.getNextId());
+                if ( tempPrev.isPresent() ) {
+                    if (tempNext.isPresent()) {
+                        tempPrev.get().updateNext(tempNext.get().getId());
+                    }
+                }
+            } else {
+                tempPrev.get().updateNext(null);
+            }
+        }
+        if (space.getNextId() != null) {
+            tempNext = spaceRepository.findById(space.getNextId());
+            if (space.getPrevId() != null) {
+                tempPrev = spaceRepository.findById(space.getPrevId());
+                if ( tempNext.isPresent() ) {
+                    if (tempPrev.isPresent()) {
+                        tempNext.get().updatePrev(tempPrev.get().getId());
+                    }
+                }
+            } else {
+                tempNext.get().updatePrev(null);
+            }
+        }
+        space.updateIsDeleted(true);
+
+
+    }
+    public void moveSpace(Space space, Space toSpace) {
+        UUID tempPrevId = space.getPrevId();
+        UUID tempNextId = space.getNextId();
+
+        UUID tempToPrevId = toSpace.getPrevId();
+        UUID tempToNextId = toSpace.getNextId();
+        Optional<Space> tempPrev;
+        Optional<Space> tempNext;
+        if (tempNextId != null ? tempNextId.equals(toSpace.getId()) : false ||
+               tempPrevId !=null ?  tempPrevId.equals(toSpace.getId()) : false ) {
+            if (tempNextId == toSpace.getId()) {
+                space.updateNext(tempToNextId);
+                toSpace.updateNext(space.getId());
+                space.updatePrev(toSpace.getId());
+                toSpace.updatePrev(tempPrevId);
+                if (tempPrevId != null) {
+                    tempPrev = spaceRepository.findById(tempPrevId);
+                    if ( tempPrev.isPresent() ) {
+                        tempPrev.get().updateNext(toSpace.getId());
+                    }
+                }
+                if (tempToNextId != null) {
+                    tempNext = spaceRepository.findById(tempToNextId);
+                    if ( tempNext.isPresent() ) {
+                        tempNext.get().updatePrev(space.getId());
+                    }
+                }
+            } else {
+                space.updatePrev(tempToPrevId);
+                toSpace.updatePrev(space.getId());
+                space.updateNext(toSpace.getId());
+                toSpace.updateNext(tempNextId);
+                if (tempNextId != null) {
+                    tempNext = spaceRepository.findById(tempNextId);
+                    if ( tempNext.isPresent() ) {
+                        tempNext.get().updatePrev(toSpace.getId());
+                    }
+                }
+                if (tempToPrevId != null) {
+                    tempPrev = spaceRepository.findById(tempToPrevId);
+                    if ( tempPrev.isPresent() ) {
+                        tempPrev.get().updateNext(space.getId());
+                    }
+                }
+            }
+        } else {
+            if (tempPrevId != null) {
+                tempPrev = spaceRepository.findById(tempPrevId);
+                if ( tempPrev.isPresent() ) {
+                    tempPrev.get().updateNext(toSpace.getId());
+                }
+            }
+            if (tempNextId != null) {
+                tempNext = spaceRepository.findById(tempNextId);
+                if ( tempNext.isPresent() ) {
+                    tempNext.get().updatePrev(toSpace.getId());
+                }
+            }
+            toSpace.updatePrev(tempPrevId);
+            toSpace.updateNext(tempNextId);
+            if (tempToPrevId != null) {
+                tempPrev = spaceRepository.findById(tempToPrevId);
+                if ( tempPrev.isPresent() ) {
+                    tempPrev.get().updateNext(space.getId());
+                }
+            }
+            if (tempToNextId != null) {
+                tempNext = spaceRepository.findById(tempToNextId);
+                if ( tempNext.isPresent() ) {
+                    tempNext.get().updatePrev(space.getId());
+                }
+            }
+            space.updatePrev(tempToPrevId);
+            space.updateNext(tempToNextId);
+        }
+
+    }
 }

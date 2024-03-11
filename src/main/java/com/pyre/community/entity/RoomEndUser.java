@@ -4,13 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.pyre.community.enumeration.RoomRole;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.util.Objects;
 import java.util.UUID;
 
 
 @Getter
 @Entity
+@Slf4j
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RoomEndUser extends BaseEntity {
     @Id
@@ -38,18 +41,16 @@ public class RoomEndUser extends BaseEntity {
     @Enumerated(value = EnumType.STRING)
     private RoomRole role;
     private Boolean owner;
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private RoomEndUser prev;
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private RoomEndUser next;
-
+    private UUID prevId;
+    private UUID nextId;
+    private Boolean isDeleted;
     @Builder
     public RoomEndUser(
             Room room,
             UUID userId,
             RoomRole role,
             Boolean owner,
-            RoomEndUser prev,
+            UUID prevId,
             Channel channel,
             ChannelEndUser channelEndUser
     ) {
@@ -57,22 +58,22 @@ public class RoomEndUser extends BaseEntity {
         this.userId = userId;
         this.role = role;
         this.owner = owner;
-        this.prev = prev;
-        this.next = null;
+        this.prevId = prevId;
+        this.nextId = null;
         this.channel = channel;
+        this.isDeleted = false;
         this.channelEndUser = channelEndUser;
     }
-    public void updateNext(RoomEndUser next) {
-        this.next = next;
+    public void updateNext(UUID nextId) {
+        this.nextId = nextId;
     }
-    public void updatePrev(RoomEndUser prev) {
-        this.prev = prev;
+    public void updatePrev(UUID prevId) {
+        this.prevId = prevId;
     }
     public void updateRole(RoomRole role) {
         this.role = role;
     }
-    public String getChannelTitle() {
-        return this.channel.getTitle();
+    public void updateIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
-
 }

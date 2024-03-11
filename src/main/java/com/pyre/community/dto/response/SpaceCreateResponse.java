@@ -30,8 +30,8 @@ public record SpaceCreateResponse(
                 new SpaceCreateResponse(
                         space.getId(),
                         space.getRoom().getId(),
-                        space.getPrev() == null ? null : space.getPrev().getId(),
-                        space.getNext() == null ? null : space.getNext().getId(),
+                        space.getPrevId() == null ? null : space.getPrevId(),
+                        space.getNextId() == null ? null : space.getNextId(),
                         space.getType(),
                         space.getRole(),
                         space.getTitle(),

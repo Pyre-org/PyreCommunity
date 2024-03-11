@@ -10,5 +10,5 @@ import java.util.UUID;
 
 @Repository
 public interface SpaceRepository extends JpaRepository<Space, UUID> {
-    List<Space> findAllByRoom(Room room);
+    List<Space> findAllByRoomAndIsDeleted(Room room, Boolean isDeleted);
 }

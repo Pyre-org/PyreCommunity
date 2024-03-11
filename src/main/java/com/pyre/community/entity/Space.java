@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Getter
@@ -28,39 +29,43 @@ public class Space extends BaseEntity {
     private SpaceType type;  // 채팅 OR 피드 스페이스
     @Enumerated(value = EnumType.STRING)
     private SpaceRole role;  // 스페이스를 볼 수 있는 권한의 시작
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Space prev;
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private Space next;
+    private UUID prevId;
+    private UUID nextId;
     private String title;
     private String description;
+    private Boolean isDeleted;
     @Builder
     public Space(
             Room room,
             SpaceType type,
             SpaceRole role,
-            Space prev,
+            UUID prevId,
             String title,
             String description
     ) {
         this.room = room;
         this.type = type;
         this.role = role;
-        this.prev = prev;
-        this.next = null;
+        this.prevId = prevId;
+        this.nextId = null;
         this.title = title;
+        this.isDeleted = false;
         this.description = description;
     }
-    public void updateNext(Space next) {
-        this.next = next;
+    public void updateNext(UUID nextId) {
+        this.nextId = nextId;
     }
-    public void updatePrev(Space prev) {
-        this.prev = prev;
+    public void updateIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+    public void updatePrev(UUID prevId) {
+        this.prevId = prevId;
     }
     public void updateSpace(SpaceUpdateRequest spaceUpdateRequest) {
         this.role = spaceUpdateRequest.role();
         this.title = spaceUpdateRequest.title();
         this.description = spaceUpdateRequest.description();
     }
+
 
 }
