@@ -470,7 +470,7 @@ public class RoomServiceImpl implements RoomService {
             throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
         }
 
-        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByUserIdAndIsDeleted(userId, false);
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserIdAndIsDeleted(channel, userId, false);
         RoomEndUser lastRoomEndUser = getLastRoomEndUser(roomEndUsers);
         RoomEndUser roomEndUser = RoomEndUser.builder()
                 .userId(userId)
@@ -487,7 +487,7 @@ public class RoomServiceImpl implements RoomService {
                 .role(roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE) ? SpaceRole.SPACEROLE_USER : SpaceRole.SPACEROLE_GUEST)
                 .title("일반 피드")
                 .description("일반 피드 스페이스")
-                .type(SpaceType.SPACE_FEED)
+                .type(SpaceType.SPACE_GENERAL)
                 .prevId(null)
                 .build();
         Space savedFeed = this.spaceRepository.save(feed);
@@ -496,7 +496,7 @@ public class RoomServiceImpl implements RoomService {
                 .role(roomCreateRequest.type().equals(RoomType.ROOM_PRIVATE) ? SpaceRole.SPACEROLE_USER : SpaceRole.SPACEROLE_GUEST)
                 .title("일반 채팅")
                 .description("일반 채팅 스페이스")
-                .type(SpaceType.SPACE_CHAT)
+                .type(SpaceType.SPACE_GENERAL_CHAT)
                 .prevId(savedFeed.getId())
                 .build();
         savedFeed.updateNext(this.spaceRepository.save(chat).getId());

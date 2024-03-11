@@ -44,6 +44,10 @@ public class SpaceServiceImpl implements SpaceService {
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 모더나 어드민이 아닙니다.");
         }
+        if (spaceCreateRequest.type().getKey().equals("SPACE_GENERAL") ||
+                spaceCreateRequest.type().getKey().equals("SPACE_GENERAL_CHAT")) {
+            throw new CustomException("해당 타입은 생성할 수 없습니다.");
+        }
         Space lastSpace = getLastSpace(room.get());
         Space space = Space.builder()
                 .room(room.get())
@@ -167,6 +171,10 @@ public class SpaceServiceImpl implements SpaceService {
         if (!gotRoomEndUser.getRole().equals(RoomRole.ROOM_MODE) && !roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, userId, false).get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 모더나 어드민이 아닙니다.");
         }
+        if (space.getType().getKey().equals("SPACE_GENERAL") ||
+                space.getType().getKey().equals("SPACE_GENERAL_CHAT")) {
+            throw new CustomException("해당 스페이스는 삭제할 수 없습니다.");
+        }
         deleteSpace(space);
 
         return "스페이스가 삭제되었습니다.";
@@ -252,7 +260,6 @@ public class SpaceServiceImpl implements SpaceService {
         UUID tempPrevId = space.getPrevId();
         UUID tempNextId = space.getNextId();
 
-        UUID tempToPrevId = toSpace.getPrevId();
         UUID tempToNextId = toSpace.getNextId();
         Optional<Space> tempPrev;
         Optional<Space> tempNext;
