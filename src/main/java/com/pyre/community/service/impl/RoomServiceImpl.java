@@ -194,6 +194,7 @@ public class RoomServiceImpl implements RoomService {
             if (deletedUser.isPresent()) {
                 deletedUser.get().updateIsDeleted(false);
                 deletedUser.get().updatePrev(lastRoomEndUser.getId());
+                deletedUser.get().updateNext(null);
                 lastRoomEndUser.updateNext(deletedUser.get().getId());
                 savedRoomEndUser = deletedUser.get();
             } else {
@@ -215,6 +216,7 @@ public class RoomServiceImpl implements RoomService {
             if (deletedUser.isPresent()) {
                 deletedUser.get().updateIsDeleted(false);
                 deletedUser.get().updatePrev(lastRoomEndUser.getId());
+                deletedUser.get().updateNext(null);
                 lastRoomEndUser.updateNext(deletedUser.get().getId());
                 savedRoomEndUser = deletedUser.get();
             } else {
