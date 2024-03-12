@@ -318,9 +318,11 @@ public class RoomServiceImpl implements RoomService {
             throw new DataNotFoundException("존재하지 않는 룸입니다.");
         }
         if (room.get().getType().equals(RoomType.ROOM_GLOBAL) ||
-                room.get().getType().equals(RoomType.ROOM_CAPTURE) ||
-                toRoom.get().getType().equals(RoomType.ROOM_GLOBAL)) {
-            throw new PermissionDenyException("공용 룸 또는 캡처 룸외 다른 장소로 이동할 수 있습니다.");
+                room.get().getType().equals(RoomType.ROOM_CAPTURE)) {
+            throw new PermissionDenyException("공용 룸 또는 캡처 룸은 이동할 수 없습니다.");
+        }
+        if (toRoom.get().getType().equals(RoomType.ROOM_GLOBAL)) {
+            throw new PermissionDenyException("공용 룸 또는 캡처 룸으로 이동할 수 없습니다.");
         }
         Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
         Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(toRoom.get(), userId, false);

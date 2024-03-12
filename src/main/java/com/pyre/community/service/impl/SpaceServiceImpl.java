@@ -9,6 +9,7 @@ import com.pyre.community.dto.response.SpaceGetResponse;
 import com.pyre.community.entity.*;
 import com.pyre.community.enumeration.RoomRole;
 import com.pyre.community.enumeration.SpaceRole;
+import com.pyre.community.enumeration.SpaceType;
 import com.pyre.community.exception.customexception.CustomException;
 import com.pyre.community.exception.customexception.DataNotFoundException;
 import com.pyre.community.exception.customexception.PermissionDenyException;
@@ -207,6 +208,13 @@ public class SpaceServiceImpl implements SpaceService {
         }
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
             throw new PermissionDenyException("해당 룸의 모더나 관리자가 아닙니다.");
+        }
+        if (space.get().getType().equals(SpaceType.SPACE_GENERAL) ||
+                space.get().getType().equals(SpaceType.SPACE_GENERAL_CHAT)) {
+            throw new CustomException("해당 스페이스는 이동할 수 없습니다.");
+        }
+        if (toSpace.get().getType().equals(SpaceType.SPACE_GENERAL)) {
+            throw new CustomException("해당 스페이스로 이동할 수 없습니다.");
         }
         moveSpace(space.get(), toSpace.get());
         return "스페이스의 위치가 변경되었습니다.";
