@@ -253,7 +253,8 @@ public class SpaceServiceImpl implements SpaceService {
             }
         }
         space.updateIsDeleted(true);
-
+        space.updatePrev(null);
+        space.updateNext(null);
 
     }
     public void moveSpace(Space space, Space toSpace) {
