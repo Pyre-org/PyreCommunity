@@ -98,4 +98,29 @@ public class SpaceController {
     ) {
         return new ResponseEntity<>(this.spaceService.locateSpace(UUID.fromString(userId), spaceLocateRequest), HttpStatus.OK);
     }
+
+    @GetMapping("/canWrite/{spaceId}")
+    @Operation(description = "스페이스의 권한을 통과할 수 있는지 여부를 조회하는 엔드포인트")
+    @Parameters({
+            @Parameter(name = "spaceId", description = "스페이스 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<Boolean> canWriteSpace(
+            @RequestHeader("id") String userId,
+            @PathVariable("spaceId") String spaceId
+    ) {
+        return new ResponseEntity<>(this.spaceService.canWriteSpace(UUID.fromString(userId), spaceId), HttpStatus.OK);
+    }
+    @GetMapping("/getCapture/{channelId}")
+    @Operation(description = "채널 캡쳐 스페이스 가져오기")
+    @Parameters({
+            @Parameter(name = "channelId", description = "채널 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> getCaptureSpace(
+            @RequestHeader("id") String userId,
+            @PathVariable("channelId") String channelId
+    ) {
+        return new ResponseEntity<>(this.spaceService.getCaptureSpace(userId, channelId), HttpStatus.OK);
+    }
 }

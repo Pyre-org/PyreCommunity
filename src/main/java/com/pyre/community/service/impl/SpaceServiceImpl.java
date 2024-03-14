@@ -8,6 +8,7 @@ import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
 import com.pyre.community.dto.response.SpaceGetResponse;
 import com.pyre.community.entity.*;
 import com.pyre.community.enumeration.RoomRole;
+import com.pyre.community.enumeration.RoomType;
 import com.pyre.community.enumeration.SpaceRole;
 import com.pyre.community.enumeration.SpaceType;
 import com.pyre.community.exception.customexception.CustomException;
@@ -218,6 +219,61 @@ public class SpaceServiceImpl implements SpaceService {
         }
         moveSpace(space.get(), toSpace.get());
         return "스페이스의 위치가 변경되었습니다.";
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public Boolean canWriteSpace(UUID userId, String spaceId) {
+        Space space = spaceRepository.findById(UUID.fromString(spaceId)).orElseThrow(() -> new DataNotFoundException("해당 스페이스는 존재하지 않습니다."));
+        if (space.getIsDeleted()) {
+            throw new DataNotFoundException("해당 스페이스는 존재하지 않습니다.");
+        }
+        if (space.getType().equals(SpaceType.SPACE_CHAT) ||
+                space.getType().equals(SpaceType.SPACE_GENERAL_CHAT)) {
+            return false;
+        }
+        Room room = space.getRoom();
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, userId, false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
+        }
+        RoomEndUser gotRoomEndUser = roomEndUser.get();
+        if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_GUEST)) {
+            if (!space.getRole().equals(SpaceRole.SPACEROLE_GUEST)) {
+                return false;
+            } else {
+                return true;
+            }
+        } else if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_USER)) {
+            if (space.getRole().equals(SpaceRole.SPACEROLE_USER) || space.getRole().equals(SpaceRole.SPACEROLE_GUEST)) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public String getCaptureSpace(String userId, String channelId) {
+        Optional<Channel> channel = channelRepository.findById(UUID.fromString(channelId));
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("해당 채널은 존재하지 않습니다.");
+        }
+        Optional<ChannelEndUser> channelEndUser = channelEndUserRepository.findByChannelAndUserId(channel.get(), UUID.fromString(userId));
+        if (!channelEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 채널에 가입하지 않은 상태입니다.");
+        }
+        if (channelEndUser.get().getSubscribe().equals(false)) {
+            throw new PermissionDenyException("해당 채널을 구독하지 않은 상태입니다.");
+        }
+
+
+        Space space = channel.get().getRooms().stream().filter(room -> room.getType().equals(RoomType.ROOM_CAPTURE)).findAny().orElse(null).getSpaces().get(0);
+        if (space.getIsDeleted()) {
+            throw new DataNotFoundException("해당 스페이스는 존재하지 않습니다.");
+        }
+        return space.getId().toString();
     }
 
     private Space getLastSpace(Room room) {

@@ -23,5 +23,8 @@ public interface SpaceService {
     String deleteSpace(UUID userId, String spaceId);
     @Transactional
     String locateSpace(UUID userId, SpaceLocateRequest spaceLocateRequest);
-
+    @Transactional(readOnly = true)
+    Boolean canWriteSpace(UUID userId, String spaceId);
+    @Transactional(readOnly = true)
+    String getCaptureSpace(String userId, String channelId);
 }

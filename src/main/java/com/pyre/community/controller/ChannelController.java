@@ -8,9 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,14 +27,14 @@ import java.util.UUID;
 @Validated
 public class ChannelController {
     private final ChannelService channelService;
-
     @PostMapping("/create")
     @Operation(description = "채널 생성")
     @Parameters({
             @Parameter(name = "userId", description = "액세스 토큰 아이디", required = true, example = "afasdwq-xcvxwe-sacdsd"),
     })
     public ResponseEntity<ChannelCreateViewDto> createChannel(@RequestBody @Valid ChannelCreateDto channelCreateDto, @RequestHeader(value = "id") String userId) {
-        return new ResponseEntity<>(this.channelService.createChannel(channelCreateDto, UUID.fromString(userId)), HttpStatus.OK);
+        ChannelCreateViewDto response = this.channelService.createChannel(channelCreateDto, UUID.fromString(userId));
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @Operation(description = "유저의 모든 채널 가져오기")
     @GetMapping()
@@ -235,4 +233,6 @@ public class ChannelController {
     ) {
         return new ResponseEntity<>(this.channelService.isSubscribed(UUID.fromString(userId), UUID.fromString(channelId)), HttpStatus.OK);
     }
+
+
 }
