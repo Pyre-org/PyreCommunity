@@ -1,7 +1,9 @@
 package com.pyre.community.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
+import com.pyre.community.enumeration.RoomRole;
 import org.springframework.transaction.annotation.Transactional;
 
 
@@ -36,4 +38,6 @@ public interface RoomService {
     String banUser(UUID userId, RoomEndUserBanRequest roomEndUserBanRequest);
     @Transactional
     String unbanUser(UUID userId, RoomEndUserUnbanRequest roomEndUserUnbanRequest);
+    @Transactional(readOnly = true)
+    RoomRole getRoomRole(UUID userId, UUID roomId);
 }

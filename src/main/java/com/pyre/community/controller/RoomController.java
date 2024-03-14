@@ -1,7 +1,9 @@
 package com.pyre.community.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
+import com.pyre.community.enumeration.RoomRole;
 import com.pyre.community.enumeration.RoomType;
 import com.pyre.community.service.RoomService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,7 +38,7 @@ public class RoomController {
     public ResponseEntity<RoomCreateResponse> createRoom(
             @RequestBody @Valid RoomCreateRequest roomCreateRequest,
             @RequestHeader("id") String token
-    ) {
+    ) throws JsonProcessingException {
         return new ResponseEntity<>(this.roomService.createRoom(UUID.fromString(token), roomCreateRequest), HttpStatus.OK);
     }
     @GetMapping("/get/{roomId}")
@@ -88,7 +90,7 @@ public class RoomController {
     public ResponseEntity<RoomGetDetailListResponse> listByChannelAndKeywordAndUserId (
             @PathVariable String channelId,
             @RequestHeader("id") String userId
-    ) {
+    ) throws JsonProcessingException {
         return new ResponseEntity<>(this.roomService.listByChannelAndUserIdByIndexing(UUID.fromString(channelId), UUID.fromString(userId)), HttpStatus.OK);
     }
     @PostMapping("/join/{roomId}")
@@ -196,6 +198,18 @@ public class RoomController {
             @RequestBody RoomEndUserUnbanRequest roomEndUserUnBanRequest
     ) {
         return new ResponseEntity<>(this.roomService.unbanUser(UUID.fromString(userId), roomEndUserUnBanRequest), HttpStatus.OK);
+    }
+    @GetMapping("/role/{roomId}")
+    @Operation(description = "해당 룸의 유저의 역할을 확인합니다.")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "roomId", description = "룸 UUID", in = ParameterIn.PATH, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<RoomRole> getRole(
+            @RequestHeader("id") String userId,
+            @PathVariable String roomId
+    ) {
+        return new ResponseEntity<>(this.roomService.getRoomRole(UUID.fromString(userId), UUID.fromString(roomId)), HttpStatus.OK);
     }
 
 }

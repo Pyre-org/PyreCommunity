@@ -1,5 +1,6 @@
 package com.pyre.community.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.entity.*;
@@ -451,6 +452,20 @@ public class RoomServiceImpl implements RoomService {
         }
         gotToRoomEndUser.unbanUser(roomEndUserUnbanRequest.reason());
         return "성공적으로 룸의 멤버가 차단 해제 되었습니다.";
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public RoomRole getRoomRole(UUID userId, UUID roomId) {
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        return roomEndUser.get().getRole();
+
     }
 
     private Room createRoomAndSpace(RoomCreateRequest roomCreateRequest, Channel channel, UUID userId) {
