@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public record ChannelGetViewDto(
     @Schema(description = "채널 UUID", example = "asdf-qwex-vzxc")
@@ -50,8 +51,11 @@ public record ChannelGetViewDto(
                 channel.getGenre(),
                 channel.getImageUrl(),
                 channel.getRating(),
-                channel.getEndUsers().size(),
-                channel.getRooms().size(),
+                channel.getEndUsers().stream().filter(
+                        channelEndUser -> (channelEndUser.getSubscribe() == true && channelEndUser.getBan() == false)
+                ).collect(Collectors.toList()).size(),
+                channel.getRooms()
+                        .size(),
                 localDateToString(channel.getCAt())
         );
         return channelGetViewDto;
