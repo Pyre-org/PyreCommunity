@@ -62,7 +62,7 @@ public class Space extends BaseEntity {
         this.prevId = prevId;
     }
     public void updateSpace(SpaceUpdateRequest spaceUpdateRequest) {
-        this.role = spaceUpdateRequest.role();
+        this.role = SpaceRole.valueOf(spaceUpdateRequest.role().getKey());
         this.title = spaceUpdateRequest.title();
         this.description = spaceUpdateRequest.description();
     }
