@@ -3,6 +3,7 @@ package com.pyre.community.service;
 import com.pyre.community.dto.request.SpaceCreateRequest;
 import com.pyre.community.dto.request.SpaceLocateRequest;
 import com.pyre.community.dto.request.SpaceUpdateRequest;
+import com.pyre.community.dto.response.ChannelInfoFromSpaceResponse;
 import com.pyre.community.dto.response.SpaceCreateResponse;
 import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
 import com.pyre.community.dto.response.SpaceGetResponse;
@@ -30,4 +31,6 @@ public interface SpaceService {
     String getCaptureSpace(String userId, String channelId);
     @Transactional(readOnly = true)
     List<UUID> canReadSpaces(UUID userId);
+    @Transactional(readOnly = true)
+    ChannelInfoFromSpaceResponse getChannelCaptureSpace(String userId, String spaceId);
 }

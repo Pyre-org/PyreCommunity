@@ -3,6 +3,7 @@ package com.pyre.community.controller;
 import com.pyre.community.dto.request.SpaceCreateRequest;
 import com.pyre.community.dto.request.SpaceLocateRequest;
 import com.pyre.community.dto.request.SpaceUpdateRequest;
+import com.pyre.community.dto.response.ChannelInfoFromSpaceResponse;
 import com.pyre.community.dto.response.SpaceCreateResponse;
 import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
 import com.pyre.community.dto.response.SpaceGetResponse;
@@ -126,12 +127,24 @@ public class SpaceController {
         return new ResponseEntity<>(this.spaceService.getCaptureSpace(userId, channelId), HttpStatus.OK);
     }
 
-    @GetMapping("/space/canReadFeedSpaces")
+    @GetMapping("/canReadFeedSpaces")
     @Operation(description = "볼 수 있는 모든 스페이스를 조회하는 Feign 전용 엔드포인트")
     @Parameters({
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
     public ResponseEntity<List<UUID>> canReadSpaces(@RequestHeader("id") String userId) {
         return new ResponseEntity<>(this.spaceService.canReadSpaces(UUID.fromString(userId)), HttpStatus.OK);
+    }
+    @GetMapping("/getChannelCapture/{spaceId}")
+    @Operation(description = "스페이스가 포함된 채널의 캡쳐 스페이스 가져오기 Feign 전용 엔드포인트")
+    @Parameters({
+            @Parameter(name = "spaceId", description = "스페이스 UUID", required = true, in = ParameterIn.PATH, example = "dqweqw-dascavcsd-vewrewr"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<ChannelInfoFromSpaceResponse> getChannelCaptureSpace(
+            @RequestHeader("id") String userId,
+            @PathVariable("spaceId") String spaceId
+    ) {
+        return new ResponseEntity<>(this.spaceService.getChannelCaptureSpace(userId, spaceId), HttpStatus.OK);
     }
 }

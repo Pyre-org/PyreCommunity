@@ -3,6 +3,7 @@ package com.pyre.community.service.impl;
 import com.pyre.community.dto.request.SpaceCreateRequest;
 import com.pyre.community.dto.request.SpaceLocateRequest;
 import com.pyre.community.dto.request.SpaceUpdateRequest;
+import com.pyre.community.dto.response.ChannelInfoFromSpaceResponse;
 import com.pyre.community.dto.response.SpaceCreateResponse;
 import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
 import com.pyre.community.dto.response.SpaceGetResponse;
@@ -313,6 +314,35 @@ public class SpaceServiceImpl implements SpaceService {
             }
         }
         return spaceIds;
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public ChannelInfoFromSpaceResponse getChannelCaptureSpace(String userId, String spaceId) {
+        Space space = spaceRepository.findById(UUID.fromString(spaceId)).orElseThrow(() -> new DataNotFoundException("해당 스페이스는 존재하지 않습니다."));
+        if (space.getIsDeleted()) {
+            throw new DataNotFoundException("해당 스페이스는 존재하지 않습니다.");
+        }
+        Room room = space.getRoom();
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room, UUID.fromString(userId), false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않은 상태입니다.");
+        }
+        Optional<Channel> channel = channelRepository.findById(room.getChannel().getId());
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("해당 채널은 존재하지 않습니다.");
+        }
+        Optional<ChannelEndUser> channelEndUser = channelEndUserRepository.findByChannelAndUserId(channel.get(), UUID.fromString(userId));
+        if (!channelEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 채널에 가입하지 않은 상태입니다.");
+        }
+        if (channelEndUser.get().getSubscribe().equals(false)) {
+            throw new PermissionDenyException("해당 채널을 구독하지 않은 상태입니다.");
+        }
+        UUID channelId = channel.get().getId();
+        UUID captureSpaceId = UUID.fromString(getCaptureSpace(userId, channelId.toString()));
+        ChannelInfoFromSpaceResponse channelInfoFromSpaceResponse = ChannelInfoFromSpaceResponse.makeDto(channelId, captureSpaceId);
+
+        return channelInfoFromSpaceResponse;
     }
 
     private Space getLastSpace(Room room) {
