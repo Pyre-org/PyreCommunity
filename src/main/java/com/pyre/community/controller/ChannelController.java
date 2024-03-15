@@ -62,12 +62,12 @@ public class ChannelController {
     public ResponseEntity<ChannelGetAllViewDto> getCommunityListBySearch(
             @RequestHeader("Authorization")  String token,
             @RequestHeader("id") String userId,
-            @RequestParam(value = "genre", defaultValue = "GENERAL")  String genre,
+            @RequestParam(value = "genre", defaultValue = "")  String genre,
             @RequestParam(value = "sortBy", defaultValue = "title")  String sortBy,
             @RequestParam(value = "keyword", defaultValue = "") String keyword,
             @RequestParam(value = "orderByDesc", defaultValue = "true") Boolean orderByDesc
     ) {
-        ChannelGetAllViewDto response = this.channelService.getAllChannelByUserAndSearch(UUID.fromString(userId), token, ChannelGenre.valueOf(genre), sortBy, keyword, orderByDesc);
+        ChannelGetAllViewDto response = this.channelService.getAllChannelByUserAndSearch(UUID.fromString(userId), token, genre, sortBy, keyword, orderByDesc);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     @GetMapping("/get/{channelId}")
@@ -106,7 +106,7 @@ public class ChannelController {
     })
     public ResponseEntity<String> updateChannelApprovalStatus(
             @RequestHeader(value = "Authorization") String accessToken,
-            @RequestBody ChannelUpdateApprovalStatusDto allow,
+            @RequestBody @Valid ChannelUpdateApprovalStatusDto allow,
             @PathVariable String channelId) {
         return new ResponseEntity<>(this.channelService.updateChannelApprovalStatus(accessToken, UUID.fromString(channelId), allow), HttpStatus.OK);
     }
@@ -118,7 +118,7 @@ public class ChannelController {
     })
     public ResponseEntity<ChannelGetViewDto> editChannel(
             @RequestHeader(value = "Authorization") String accessToken,
-            @RequestBody ChannelEditDto channelEditDto,
+            @RequestBody @Valid ChannelEditDto channelEditDto,
             @PathVariable String channelId) {
         return new ResponseEntity<>(this.channelService.editChannel(accessToken, UUID.fromString(channelId), channelEditDto), HttpStatus.OK);
     }
@@ -155,7 +155,7 @@ public class ChannelController {
     public ResponseEntity<ChannelJoinResponse> join(
             @RequestHeader("Authorization") String token,
             @RequestHeader("id") String userId,
-            @RequestBody ChannelJoinRequest request
+            @RequestBody @Valid ChannelJoinRequest request
             ) {
         log.info("POST /community-server/community/member");
 
@@ -172,7 +172,7 @@ public class ChannelController {
     public ResponseEntity<String> locateChannel(
             @RequestHeader("Authorization") String token,
             @RequestHeader("id") String userId,
-            @RequestBody ChannelLocateRequest request
+            @RequestBody @Valid ChannelLocateRequest request
     ) {
         this.channelService.locateChannel(UUID.fromString(userId), token, request);
         return new ResponseEntity<>("성공적으로 위치가 변경되었습니다.", HttpStatus.OK);

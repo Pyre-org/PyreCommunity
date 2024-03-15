@@ -102,7 +102,7 @@ public class RoomController {
     public ResponseEntity<RoomJoinResponse> joinRoom(
             @PathVariable String roomId,
             @RequestHeader("id") String userId,
-            @RequestBody RoomJoinRequest roomJoinRequest
+            @RequestBody @Valid RoomJoinRequest roomJoinRequest
     ) {
         return new ResponseEntity<>(this.roomService.joinRoom(UUID.fromString(roomId), UUID.fromString(userId), UUID.fromString(roomJoinRequest.channelId())), HttpStatus.OK);
     }
@@ -150,7 +150,7 @@ public class RoomController {
     })
     public ResponseEntity<String> locateRoom(
             @RequestHeader("id") String userId,
-            @RequestBody RoomLocateRequest roomLocateRequest
+            @RequestBody @Valid RoomLocateRequest roomLocateRequest
     ) {
         return new ResponseEntity<>(this.roomService.locateRoom(UUID.fromString(userId), roomLocateRequest), HttpStatus.OK);
     }
@@ -161,7 +161,7 @@ public class RoomController {
     })
     public ResponseEntity<String> updateUserRole(
             @RequestHeader("id") String userId,
-            @RequestBody RoomEndUserRoleUpdateRequest roomEndUserRoleUpdateRequest
+            @RequestBody @Valid RoomEndUserRoleUpdateRequest roomEndUserRoleUpdateRequest
     ) {
         return new ResponseEntity<>(this.roomService.updateUserRole(UUID.fromString(userId), roomEndUserRoleUpdateRequest), HttpStatus.OK);
     }
@@ -184,7 +184,7 @@ public class RoomController {
     })
     public ResponseEntity<String> banUser(
             @RequestHeader("id") String userId,
-            @RequestBody RoomEndUserBanRequest roomEndUserBanRequest
+            @RequestBody @Valid RoomEndUserBanRequest roomEndUserBanRequest
     ) {
         return new ResponseEntity<>(this.roomService.banUser(UUID.fromString(userId), roomEndUserBanRequest), HttpStatus.OK);
     }
@@ -195,7 +195,7 @@ public class RoomController {
     })
     public ResponseEntity<String> unbanUser(
             @RequestHeader("id") String userId,
-            @RequestBody RoomEndUserUnbanRequest roomEndUserUnBanRequest
+            @RequestBody @Valid RoomEndUserUnbanRequest roomEndUserUnBanRequest
     ) {
         return new ResponseEntity<>(this.roomService.unbanUser(UUID.fromString(userId), roomEndUserUnBanRequest), HttpStatus.OK);
     }
@@ -211,5 +211,65 @@ public class RoomController {
     ) {
         return new ResponseEntity<>(this.roomService.getRoomRole(UUID.fromString(userId), UUID.fromString(roomId)), HttpStatus.OK);
     }
+    @PostMapping("/invitation")
+    @Operation(description = "해당 룸의 초대장을 개설합니다.")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<String> createInvitation(
+            @RequestHeader("id") String userId,
+            @RequestBody @Valid RoomInvitationCreateRequest roomInvitationCreateRequest
+    ) {
+        return new ResponseEntity<>(this.roomService.createInvitation(UUID.fromString(userId), roomInvitationCreateRequest), HttpStatus.OK);
+    }
+    @GetMapping("/invitation")
+    @Operation(description = "해당 룸의 초대장 정보를 확인합니다.")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", in = ParameterIn.QUERY, required = true, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<RoomInvitationLinkResponse> getInvitationLink(
+            @RequestHeader("id") String userId,
+            @RequestParam String roomId
+    ) {
+        return new ResponseEntity<>(this.roomService.getInvitationLink(UUID.fromString(userId), UUID.fromString(roomId)), HttpStatus.OK);
+    }
+
+    @GetMapping("/invitation/{invitationId}")
+    @Operation(description = "해당 룸의 초대장으로 룸을 확인합니다.")
+    @Parameters({
+            @Parameter(name = "invitationId", description = "초대장 UUID", in = ParameterIn.PATH, required = true, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<RoomGetResponse> getInvitation(
+            @PathVariable String invitationId,
+            @RequestHeader("id") String userId
+    ) {
+        return new ResponseEntity<>(this.roomService.getInvitation(UUID.fromString(userId), invitationId), HttpStatus.OK);
+    }
+    @PostMapping("/invitation/accept")
+    @Operation(description = "해당 룸의 초대장으로 가입합니다.")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<RoomJoinResponse> acceptInvitation(
+            @RequestHeader("id") String userId,
+            @RequestBody @Valid RoomInvitationAcceptRequest roomInvitationAcceptRequest
+    ) {
+        return new ResponseEntity<>(this.roomService.acceptInvitation(UUID.fromString(userId), roomInvitationAcceptRequest), HttpStatus.OK);
+    }
+    @GetMapping("/members/{roomId}")
+    @Operation(description = "해당 룸의 멤버 리스트를 가져옵니다.")
+    @Parameters({
+            @Parameter(name = "roomId", description = "룸 UUID", in = ParameterIn.PATH, required = true, example = "dqweqwd-asdcvcv-sdfsd"),
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<RoomGetMemberListResponse> getMembers(
+            @RequestHeader("id") String userId,
+            @PathVariable String roomId
+    ) {
+        return new ResponseEntity<>(this.roomService.getMembers(UUID.fromString(userId), UUID.fromString(roomId)), HttpStatus.OK);
+    }
+
 
 }

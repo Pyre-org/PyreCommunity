@@ -32,6 +32,8 @@ public class Room {
     private String title;
     private String description;
     private String imageUrl;
+    private String inviteLink;
+    private LocalDateTime inviteExpireDate;
     @Enumerated(value = EnumType.STRING)
     private RoomType type;
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
@@ -65,5 +67,8 @@ public class Room {
         this.type = roomUpdateRequest.type();
         this.mAt = LocalDateTime.now();
     }
-
+    public void updateInvite(String inviteLink, LocalDateTime inviteExpireDate) {
+        this.inviteLink = inviteLink;
+        this.inviteExpireDate = inviteExpireDate;
+    }
 }

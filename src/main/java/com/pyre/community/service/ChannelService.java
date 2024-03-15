@@ -21,7 +21,7 @@ public interface ChannelService {
     @Transactional(readOnly = true)
     ChannelGetAllViewDto getAllChannelByUserAndSearch(
             UUID userId, String token,
-            ChannelGenre genre,
+            String genre,
             String sortBy,
             String keyword,
             Boolean orderByDesc

@@ -1,6 +1,7 @@
 package com.pyre.community.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.pyre.community.client.UserClient;
 import com.pyre.community.dto.request.*;
 import com.pyre.community.dto.response.*;
 import com.pyre.community.entity.*;
@@ -10,14 +11,17 @@ import com.pyre.community.exception.customexception.DataNotFoundException;
 import com.pyre.community.exception.customexception.DuplicateException;
 import com.pyre.community.exception.customexception.PermissionDenyException;
 import com.pyre.community.repository.*;
+import com.pyre.community.service.RedisUtilService;
 import com.pyre.community.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.enums.Enum;
 import org.apache.tomcat.websocket.AuthenticationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +34,8 @@ public class RoomServiceImpl implements RoomService {
     private final ChannelEndUserRepository channelEndUserRepository;
     private final ChannelRepository channelRepository;
     private final SpaceRepository spaceRepository;
+    private final RedisUtilService redisUtilService;
+    private final UserClient userClient;
     @Transactional
     @Override
     public RoomCreateResponse createRoom(UUID userId, RoomCreateRequest roomCreateRequest) {
@@ -172,7 +178,7 @@ public class RoomServiceImpl implements RoomService {
             throw new DataNotFoundException("해당 채널이 없거나 해당 채널에 가입하지 않았습니다.");
         }
         if (channelEndUser.get().getBan().equals(true)) {
-            throw new CustomException("차단 당한 채널에서 룸을 생성할 수 없습니다.");
+            throw new CustomException("차단 당한 채널의 룸에 가입할 수 없습니다.");
         }
         Optional<Room> room = this.roomRepository.findById(roomId);
         if (!room.isPresent()) {
@@ -465,6 +471,134 @@ public class RoomServiceImpl implements RoomService {
             throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
         }
         return roomEndUser.get().getRole();
+
+    }
+    @Transactional
+    @Override
+    public String createInvitation(UUID userId, RoomInvitationCreateRequest roomInviteLinkCreateRequest) {
+        Optional<Room> room = this.roomRepository.findById(roomInviteLinkCreateRequest.roomId());
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        Room gotRoom = room.get();
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+        }
+        String inviteLink = "https://pyre.live/invitation/" + UUID.randomUUID().toString().substring(0, 8);
+        redisUtilService.setDataExpire(inviteLink, gotRoom.getId().toString(), 60 * 60 * 24 * roomInviteLinkCreateRequest.maxDays());
+        gotRoom.updateInvite(inviteLink, LocalDateTime.now().plusDays(roomInviteLinkCreateRequest.maxDays()));
+        return inviteLink;
+    }
+
+    @Override
+    public RoomInvitationLinkResponse getInvitationLink(UUID userId, UUID roomId) {
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        Room gotRoom = room.get();
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+        }
+        RoomInvitationLinkResponse roomInvitationLinkResponse = RoomInvitationLinkResponse.makeDto(gotRoom.getInviteLink(), gotRoom.getInviteExpireDate());
+        return roomInvitationLinkResponse;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public RoomGetResponse getInvitation(UUID userId, String inviteId) {
+        String inviteLink = "https://pyre.live/invitation/";
+        String roomId = redisUtilService.getData(inviteLink+inviteId);
+        if (roomId == null) {
+            throw new DataNotFoundException("존재하지 않거나 만료된 초대장입니다.");
+        }
+        Optional<Room> room = this.roomRepository.findById(UUID.fromString(roomId));
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        return RoomGetResponse.makeDto(room.get());
+    }
+    @Transactional
+    @Override
+    public RoomJoinResponse acceptInvitation(UUID userId, RoomInvitationAcceptRequest roomInviteLinkAcceptRequest) {
+        String inviteLink = "https://pyre.live/invitation/";
+        String roomId = redisUtilService.getData(inviteLink+roomInviteLinkAcceptRequest.invitationId());
+        Optional<Room> room = this.roomRepository.findById(UUID.fromString(roomId));
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<Channel> channel = this.channelRepository.findById(room.get().getChannel().getId());
+        if (!channel.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 채널의 룸입니다.");
+        }
+        Optional<ChannelEndUser> channelEndUser = channelEndUserRepository.findByChannelAndUserId(channel.get(), userId);
+        if (!channelEndUser.isPresent()) {
+            throw new DataNotFoundException("해당 룸의 채널이 없거나 해당 룸이 포함된 채널에 가입하지 않았습니다." + channel.get().getTitle() + " 채널을 구독하세요.");
+        }
+        if (channelEndUser.get().getBan().equals(true)) {
+            throw new CustomException("차단 당한 채널의 룸에 참가할 수 없습니다.");
+        }
+        if (this.roomEndUserRepository.existsByRoomAndUserIdAndIsDeleted(room.get(), userId, false)) {
+            throw new DuplicateException("이미 가입한 룸입니다.");
+        }
+        Optional<RoomEndUser> bannedUser = roomEndUserRepository.findByRoomAndUserIdAndStatusAndIsDeleted(room.get(), userId, RoomEndUserStatus.BANNED, true);
+        if (bannedUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에서 차단당한 상태입니다. 사유 : " + bannedUser.get().getBanReason());
+        }
+        Room gotRoom = room.get();
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByChannelAndUserIdAndIsDeleted(channel.get(), userId, false);
+        RoomEndUser lastRoomEndUser = getLastRoomEndUser(roomEndUsers);
+        Optional<RoomEndUser> deletedUser = roomEndUserRepository.findByRoomAndUserIdAndStatusAndIsDeleted(room.get(), userId, RoomEndUserStatus.ACTIVE, true);
+        RoomEndUser savedRoomEndUser;
+        if (deletedUser.isPresent()) {
+            deletedUser.get().updateIsDeleted(false);
+            deletedUser.get().updatePrev(lastRoomEndUser.getId());
+            deletedUser.get().updateNext(null);
+            lastRoomEndUser.updateNext(deletedUser.get().getId());
+            savedRoomEndUser = deletedUser.get();
+        } else {
+            RoomEndUser roomEndUser = RoomEndUser.builder()
+                    .userId(userId)
+                    .room(gotRoom)
+                    .owner(false)
+                    .prevId(lastRoomEndUser.getId())
+                    .channelEndUser(channelEndUser.get())
+                    .role(RoomRole.ROOM_USER)
+                    .channel(channel.get())
+                    .build();
+            savedRoomEndUser = this.roomEndUserRepository.save(roomEndUser);
+            lastRoomEndUser.updateNext(savedRoomEndUser.getId());
+        }
+        RoomJoinResponse roomJoinResponse = RoomJoinResponse.makeDto(savedRoomEndUser);
+
+        return roomJoinResponse;
+    }
+    @Transactional(readOnly = true)
+    @Override
+    public RoomGetMemberListResponse getMembers(UUID userId, UUID roomId) {
+        Optional<Room> room = this.roomRepository.findById(roomId);
+        if (!room.isPresent()) {
+            throw new DataNotFoundException("존재하지 않는 룸입니다.");
+        }
+        Optional<RoomEndUser> roomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), userId, false);
+        if (!roomEndUser.isPresent()) {
+            throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
+        }
+        List<RoomEndUser> roomEndUsers = this.roomEndUserRepository.findAllByRoomAndIsDeleted(room.get(), false);
+        List<RoomEndUser> sortedRoomEndUsers = roomEndUsers.stream().sorted(Comparator.comparing(RoomEndUser::getRole)).toList();
+        List<ResponseEntity<NicknameAndProfileImgResponse>> nicknames = sortedRoomEndUsers.stream().map(
+                endUser -> userClient.getNicknameAndProfileImage(endUser.getUserId().toString())
+        ).toList();
+        List<NicknameAndProfileImgResponse> nicknameList = nicknames.stream().map(ResponseEntity::getBody).toList();
+        return RoomGetMemberListResponse.makeDto(sortedRoomEndUsers, nicknameList);
 
     }
 

@@ -95,7 +95,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelGetAllViewDto getAllChannelByUserAndSearch(
             UUID userId, String token,
-            ChannelGenre genre,
+            String genre,
             String sortBy,
             String keyword,
             Boolean orderByDesc
@@ -110,21 +110,21 @@ public class ChannelServiceImpl implements ChannelService {
                 .stream().filter(ce -> ce.getSubscribe().equals(true)).collect(Collectors.toList());
         List<Channel> channels = new ArrayList<>();
         for (ChannelEndUser ce: channelEndUsers) {
-            if (genre != null) {
-                if (ce.getChannel().getGenre().equals(genre)) {
-                    if (keyword.equals(null) || keyword.equals("")) {
+            if (!genre.equals("")) {
+                if (ce.getChannel().getGenre().getKey().equals(genre)) {
+                    if (keyword == null || keyword.equals("")) {
                         channels.add(ce.getChannel());
                     } else {
-                        if (ce.getChannel().getTitle().startsWith(keyword)) {
+                        if (ce.getChannel().getTitle().contains(keyword)) {
                             channels.add(ce.getChannel());
                         }
                     }
                 }
             } else {
-                if (keyword.equals(null) || keyword.equals("")) {
+                if ((keyword == null) || keyword.equals("")) {
                     channels.add(ce.getChannel());
                 } else {
-                    if (ce.getChannel().getTitle().startsWith(keyword)) {
+                    if (ce.getChannel().getTitle().contains(keyword)) {
                         channels.add(ce.getChannel());
                     }
                 }

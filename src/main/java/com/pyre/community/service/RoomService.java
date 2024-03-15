@@ -40,4 +40,14 @@ public interface RoomService {
     String unbanUser(UUID userId, RoomEndUserUnbanRequest roomEndUserUnbanRequest);
     @Transactional(readOnly = true)
     RoomRole getRoomRole(UUID userId, UUID roomId);
+    @Transactional
+    String createInvitation(UUID userId, RoomInvitationCreateRequest roomInviteLinkCreateRequest);
+    @Transactional(readOnly = true)
+    RoomInvitationLinkResponse getInvitationLink(UUID userId, UUID roomId);
+    @Transactional(readOnly = true)
+    RoomGetResponse getInvitation(UUID userId, String inviteId);
+    @Transactional
+    RoomJoinResponse acceptInvitation(UUID userId, RoomInvitationAcceptRequest roomInviteLinkAcceptRequest);
+    @Transactional(readOnly = true)
+    RoomGetMemberListResponse getMembers(UUID userId, UUID roomId);
 }

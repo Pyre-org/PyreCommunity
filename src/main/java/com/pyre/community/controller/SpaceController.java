@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,7 +35,7 @@ public class SpaceController {
     @Parameters({
             @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
     })
-    public ResponseEntity<SpaceCreateResponse> createSpace(@RequestBody @Validated SpaceCreateRequest spaceCreateRequest, @RequestHeader("id") String userId) {
+    public ResponseEntity<SpaceCreateResponse> createSpace(@RequestBody @Valid SpaceCreateRequest spaceCreateRequest, @RequestHeader("id") String userId) {
         return new ResponseEntity<>(this.spaceService.createSpace(spaceCreateRequest, UUID.fromString(userId)), HttpStatus.OK);
     }
     @GetMapping("/list")
@@ -70,7 +71,7 @@ public class SpaceController {
     public ResponseEntity<String> updateSpaceInfoByRoom(
             @RequestHeader("id") String userId,
             @PathVariable("spaceId") String roomId,
-            @RequestBody @Validated SpaceUpdateRequest spaceUpdateRequest
+            @RequestBody @Valid SpaceUpdateRequest spaceUpdateRequest
     ) {
         return new ResponseEntity<>(this.spaceService.updateSpace(UUID.fromString(userId), roomId, spaceUpdateRequest), HttpStatus.OK);
     }
@@ -94,7 +95,7 @@ public class SpaceController {
     })
     public ResponseEntity<String> locateSpaceByRoom(
             @RequestHeader("id") String userId,
-            @RequestBody @Validated SpaceLocateRequest spaceLocateRequest
+            @RequestBody @Valid SpaceLocateRequest spaceLocateRequest
     ) {
         return new ResponseEntity<>(this.spaceService.locateSpace(UUID.fromString(userId), spaceLocateRequest), HttpStatus.OK);
     }
