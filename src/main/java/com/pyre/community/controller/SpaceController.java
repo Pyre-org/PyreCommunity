@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -123,5 +124,14 @@ public class SpaceController {
             @PathVariable("channelId") String channelId
     ) {
         return new ResponseEntity<>(this.spaceService.getCaptureSpace(userId, channelId), HttpStatus.OK);
+    }
+
+    @GetMapping("/space/canReadFeedSpaces")
+    @Operation(description = "볼 수 있는 모든 스페이스를 조회하는 Feign 전용 엔드포인트")
+    @Parameters({
+            @Parameter(name = "userId", description = "액세스 토큰 아이디", in = ParameterIn.HEADER, required = true, example = "dqweqwd-asdcvcv-sdfsd")
+    })
+    public ResponseEntity<List<UUID>> canReadSpaces(@RequestHeader("id") String userId) {
+        return new ResponseEntity<>(this.spaceService.canReadSpaces(UUID.fromString(userId)), HttpStatus.OK);
     }
 }

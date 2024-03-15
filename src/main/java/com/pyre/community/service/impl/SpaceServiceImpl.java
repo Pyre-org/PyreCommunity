@@ -275,6 +275,45 @@ public class SpaceServiceImpl implements SpaceService {
         }
         return space.getId().toString();
     }
+    @Transactional(readOnly = true)
+    @Override
+    public List<UUID> canReadSpaces(UUID userId) {
+        List<RoomEndUser> roomEndUsers = roomEndUserRepository.findAllByUserIdAndIsDeleted(userId, false);
+        List<UUID> spaceIds = new ArrayList<>();
+        for (RoomEndUser roomEndUser : roomEndUsers) {
+            Room room = roomEndUser.getRoom();
+            switch (roomEndUser.getRole()) {
+                case ROOM_ADMIN:
+                    List<Space> spaces = spaceRepository.findAllByRoomAndIsDeleted(room, false);
+                    for (Space space : spaces) {
+                        spaceIds.add(space.getId());
+                    }
+                    break;
+                case ROOM_MODE:
+                    List<Space> spaces1 = spaceRepository.findAllByRoomAndIsDeleted(room, false);
+                    for (Space space : spaces1) {
+                        spaceIds.add(space.getId());
+                    }
+                    break;
+                case ROOM_USER:
+                    List<Space> spaces2 = spaceRepository.findAllByRoomAndIsDeleted(room, false);
+                    for (Space space : spaces2) {
+                        if (space.getRole().equals(SpaceRole.SPACEROLE_USER) || space.getRole().equals(SpaceRole.SPACEROLE_GUEST)) {
+                            spaceIds.add(space.getId());
+                        }
+                    }
+                    break;
+                default:
+                    List<Space> spaces3 = spaceRepository.findAllByRoomAndIsDeleted(room, false);
+                    for (Space space : spaces3) {
+                        if (space.getRole().equals(SpaceRole.SPACEROLE_GUEST)) {
+                            spaceIds.add(space.getId());
+                        }
+                }
+            }
+        }
+        return spaceIds;
+    }
 
     private Space getLastSpace(Room room) {
         List<Space> spaces = spaceRepository.findAllByRoomAndIsDeleted(room, false);

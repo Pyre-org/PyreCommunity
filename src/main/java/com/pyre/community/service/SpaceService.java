@@ -8,6 +8,7 @@ import com.pyre.community.dto.response.SpaceGetListByRoomResponse;
 import com.pyre.community.dto.response.SpaceGetResponse;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface SpaceService {
@@ -27,4 +28,6 @@ public interface SpaceService {
     Boolean canWriteSpace(UUID userId, String spaceId);
     @Transactional(readOnly = true)
     String getCaptureSpace(String userId, String channelId);
+    @Transactional(readOnly = true)
+    List<UUID> canReadSpaces(UUID userId);
 }
