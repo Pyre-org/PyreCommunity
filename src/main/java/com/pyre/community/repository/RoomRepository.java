@@ -3,7 +3,10 @@ package com.pyre.community.repository;
 import com.pyre.community.entity.Channel;
 import com.pyre.community.entity.Room;
 import com.pyre.community.enumeration.RoomType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,4 +17,6 @@ public interface RoomRepository extends JpaRepository<Room, UUID> {
     List<Room> findAllByChannelAndTypeAndTitleContainingOrderByTitle(Channel channel, RoomType type, String title);
     Room findByChannelAndType(Channel channel, RoomType type);
     Boolean existsByChannelAndTitle(Channel channel, String title);
+    @Query("SELECT r FROM Room r WHERE (r.title LIKE %?1% AND r.type = ?2) OR r in (SELECT re.room FROM RoomEndUser re WHERE re.userId = ?3 AND re.isDeleted = false)")
+    Page<Room> findAllByTitleSearch(String title, RoomType type, UUID userId, Pageable pageable);
 }

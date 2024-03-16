@@ -47,7 +47,11 @@ public record RoomGetDetailResponse(
                 ).collect(
                         java.util.stream.Collectors.toList()
                 ).size(),
-                room.getSpaces().size(),
+                room.getSpaces().stream().filter(
+                        space -> space.getIsDeleted() == false
+                ).collect(
+                        java.util.stream.Collectors.toList()
+                ).size(),
                 room.getCAt().format(DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm")),
                 SpaceGetListByRoomResponse.makeDto(spaces)
         );

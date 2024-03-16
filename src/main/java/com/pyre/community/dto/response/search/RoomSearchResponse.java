@@ -1,13 +1,12 @@
-package com.pyre.community.dto.response;
+package com.pyre.community.dto.response.search;
 
 import com.pyre.community.entity.Room;
 import com.pyre.community.enumeration.RoomType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-public record RoomGetResponse(
+public record RoomSearchResponse(
         @Schema(description = "룸 UUID", example = "asdasf-qweqw-czxc")
         UUID id,
         @Schema(description = "채널 아이디", example = "리그오브레전드")
@@ -26,12 +25,11 @@ public record RoomGetResponse(
         int spaceCounts,
         @Schema(description = "룸 생성 일", example = "YYYY-MM-dd HH:mm")
         String cAt
-
 ) {
-    public static RoomGetResponse makeDto(
+    public static RoomSearchResponse makeDto(
             Room room
     ) {
-        RoomGetResponse dto = new RoomGetResponse(
+        return new RoomSearchResponse(
                 room.getId(),
                 room.getChannel().getId(),
                 room.getTitle(),
@@ -48,8 +46,7 @@ public record RoomGetResponse(
                 ).collect(
                         java.util.stream.Collectors.toList()
                 ).size(),
-                room.getCAt().format(DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm"))
-        );
-        return dto;
+                room.getCAt().format(java.time.format.DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm"))
+                );
     }
 }
