@@ -280,6 +280,7 @@ public class SpaceServiceImpl implements SpaceService {
     @Override
     public List<UUID> canReadSpaces(UUID userId) {
         List<RoomEndUser> roomEndUsers = roomEndUserRepository.findAllByUserIdAndIsDeleted(userId, false);
+        roomEndUsers = roomEndUsers.stream().filter(roomEndUser -> roomEndUser.getChannelEndUser().getSubscribe()).toList();
         List<UUID> spaceIds = new ArrayList<>();
         for (RoomEndUser roomEndUser : roomEndUsers) {
             Room room = roomEndUser.getRoom();
