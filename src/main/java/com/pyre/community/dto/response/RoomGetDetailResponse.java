@@ -12,6 +12,8 @@ import java.util.UUID;
 public record RoomGetDetailResponse(
         @Schema(description = "룸 UUID", example = "asdasf-qweqw-czxc")
         UUID id,
+        @Schema(description = "채널 아이디", example = "리그오브레전드")
+        UUID channelId,
         @Schema(description = "룸 이름", example = "리그 1방")
         String title,
         @Schema(description = "룸 설명", example = "리그 오브 레전드의 방")
@@ -35,6 +37,7 @@ public record RoomGetDetailResponse(
     ) {
         RoomGetDetailResponse dto = new RoomGetDetailResponse(
                 room.getId(),
+                room.getChannel().getId(),
                 room.getTitle(),
                 room.getDescription(),
                 room.getImageUrl(),
