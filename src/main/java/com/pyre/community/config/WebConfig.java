@@ -28,11 +28,4 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://localhost:3000", "http://localhost:8080", "https://pyre-admin.vercel.app", "http://localhost", "https://localhost");
     }
 
-//    @Bean
-//    public WebSecurityCustomizer ignoringCustomizer() {
-//        return (web) -> web.ignoring().requestMatchers("/h2-console/**");
-//    }
-
-
-
 }
