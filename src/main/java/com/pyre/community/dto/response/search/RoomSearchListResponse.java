@@ -8,7 +8,7 @@ import java.util.List;
 
 public record RoomSearchListResponse(
         Long total,
-        List<RoomSearchResponse> rooms
+        List<RoomSearchResponse> hits
 ) {
     public static RoomSearchListResponse makeDto(Page<Room> rooms) {
         List<RoomSearchResponse> roomSearchResponses = new ArrayList<>();

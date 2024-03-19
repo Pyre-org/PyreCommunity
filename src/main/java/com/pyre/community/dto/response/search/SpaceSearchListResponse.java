@@ -8,7 +8,7 @@ import java.util.List;
 
 public record SpaceSearchListResponse(
         Long total,
-        List<SpaceSearchResponse> spaces
+        List<SpaceSearchResponse> hits
 ) {
     public static SpaceSearchListResponse makeDto(Page<Space> spaces) {
         List<SpaceSearchResponse> spaceSearchResponses = new ArrayList<>();
