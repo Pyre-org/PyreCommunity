@@ -15,7 +15,7 @@ public interface RoomService {
     @Transactional(readOnly = true)
     RoomGetResponse getRoom(UUID id, UUID userId);
     @Transactional(readOnly = true)
-    RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type);
+    RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type, int page, int size);
     @Transactional(readOnly = true)
     RoomListByChannelResponse listByChannelAndKeywordAndUserId(UUID channelId, String keyword, UUID userId);
     @Transactional(readOnly = true)

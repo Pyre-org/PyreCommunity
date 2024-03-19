@@ -63,9 +63,11 @@ public class RoomController {
     public ResponseEntity<RoomListByChannelResponse> listByChannelAndKeywordAndType (
             @PathVariable String channelId,
             @RequestParam(value = "keyword", defaultValue = "") String keyword,
-            @RequestParam(value = "type", defaultValue = "ROOM_PUBLIC") String type
+            @RequestParam(value = "type", defaultValue = "ROOM_PUBLIC") String type,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size
     ) {
-        return new ResponseEntity<>(this.roomService.listByChannelAndKeywordAndType(UUID.fromString(channelId), keyword, type), HttpStatus.OK);
+        return new ResponseEntity<>(this.roomService.listByChannelAndKeywordAndType(UUID.fromString(channelId), keyword, type, page, size), HttpStatus.OK);
     }
     @GetMapping("/my/list/{channelId}")
     @Operation(description = "채널의 소속된 모든 룸 가져오기 검색 전용")

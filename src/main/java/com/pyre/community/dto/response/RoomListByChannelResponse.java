@@ -2,6 +2,7 @@ package com.pyre.community.dto.response;
 
 import com.pyre.community.entity.Room;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.data.domain.Page;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,15 @@ public record RoomListByChannelResponse(
         }
         RoomListByChannelResponse response =
                 new RoomListByChannelResponse(roomGetResponses.size(), roomGetResponses);
+        return response;
+    }
+    public static RoomListByChannelResponse makeDtoFromPage(Page<Room> rooms) {
+        List<RoomGetResponse> roomGetResponses = new ArrayList<>();
+        for (Room r : rooms.getContent()) {
+            roomGetResponses.add(RoomGetResponse.makeDto(r));
+        }
+        RoomListByChannelResponse response =
+                new RoomListByChannelResponse((int) (rooms.getTotalElements()), roomGetResponses);
         return response;
     }
 }

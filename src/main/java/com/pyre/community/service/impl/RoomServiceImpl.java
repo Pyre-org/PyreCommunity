@@ -17,6 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.enums.Enum;
 import org.apache.tomcat.websocket.AuthenticationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,7 +88,7 @@ public class RoomServiceImpl implements RoomService {
     }
     @Transactional(readOnly = true)
     @Override
-    public RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type) {
+    public RoomListByChannelResponse listByChannelAndKeywordAndType(UUID channelId, String keyword, String type, int page, int size) {
         Optional<Channel> channel = this.channelRepository.findById(channelId);
         if (!channel.isPresent()) {
             throw new DataNotFoundException("존재하지 않는 채널입니다.");
@@ -92,8 +96,10 @@ public class RoomServiceImpl implements RoomService {
         if (!type.equals("ROOM_PUBLIC") && !type.equals("ROOM_OPEN")) {
             keyword = "ROOM_PUBLIC";
         }
-        List<Room> rooms = this.roomRepository.findAllByChannelAndTypeAndTitleContainingOrderByTitle(channel.get(), RoomType.valueOf(type), keyword);
-        return RoomListByChannelResponse.makeDto(rooms);
+        Sort sort = Sort.by(Sort.Direction.ASC, "title");
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Room> rooms = this.roomRepository.findAllByChannelAndTypeAndTitleContaining(channel.get(), RoomType.valueOf(type), keyword, pageable);
+        return RoomListByChannelResponse.makeDtoFromPage(rooms);
     }
     @Transactional(readOnly = true)
     @Override
