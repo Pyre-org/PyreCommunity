@@ -262,8 +262,8 @@ public class RoomServiceImpl implements RoomService {
             throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
         }
         RoomEndUser gotRoomEndUser = roomEndUser.get();
-        if (gotRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
-            throw new PermissionDenyException("룸의 관리자는 룸을 탈퇴할 수 없습니다.");
+        if (gotRoomEndUser.getOwner().equals(true)) {
+            throw new PermissionDenyException("룸의 소유자는 룸을 탈퇴할 수 없습니다.");
         }
         if (gotRoomEndUser.getRoom().getType().equals(RoomType.ROOM_CAPTURE) ||
                 gotRoomEndUser.getRoom().getType().equals(RoomType.ROOM_GLOBAL)) {
@@ -288,7 +288,7 @@ public class RoomServiceImpl implements RoomService {
         }
         Room gotRoom = room.get();
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
-            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+            throw new PermissionDenyException("해당 룸의 어드민이나 관리자가 아닙니다.");
         }
         gotRoom.updateRoom(roomUpdateRequest);
 
@@ -363,14 +363,32 @@ public class RoomServiceImpl implements RoomService {
             throw new PermissionDenyException("해당 룸에 가입하지 않았습니다.");
         }
         Room gotRoom = room.get();
-        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
-            throw new PermissionDenyException("해당 룸의 관리자가 아닙니다.");
+        if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE)) {
+            throw new PermissionDenyException("해당 룸의 어드민이나 관리자가 아닙니다.");
         }
-        Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(room.get(), roomEndUserRoleUpdateRequest.userId(), false);
+        Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findByRoomAndUserIdAndIsDeleted(gotRoom, roomEndUserRoleUpdateRequest.userId(), false);
         if (!toRoomEndUser.isPresent()) {
             throw new PermissionDenyException("해당 타겟이 룸의 멤버가 아닙니다.");
         }
         RoomEndUser gotToRoomEndUser = toRoomEndUser.get();
+        if (gotToRoomEndUser.getOwner().equals(true)) {
+            throw new PermissionDenyException("해당 유저는 룸의 소유자입니다. 역할을 변경할 수 없습니다.");
+        }
+        if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
+            if (roomEndUser.get().getOwner().equals(true)) {
+                gotToRoomEndUser.updateRole(roomEndUserRoleUpdateRequest.role());
+                return "성공적으로 룸의 어드민의 역할이 변경 되었습니다.";
+            }
+            throw new PermissionDenyException("어드민이나 관리자는 어드민의 역할을 변경할 수 없습니다.");
+        }
+        if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_MODE)) {
+            if (roomEndUser.get().getOwner().equals(true) ||
+                    roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
+                gotToRoomEndUser.updateRole(roomEndUserRoleUpdateRequest.role());
+                return "성공적으로 룸의 관리자의 역할이 변경 되었습니다.";
+            }
+            throw new PermissionDenyException("관리자는 관리자의 역할을 변경할 수 없습니다.");
+        }
         gotToRoomEndUser.updateRole(roomEndUserRoleUpdateRequest.role());
         return "룸의 유저의 역할이 변경되었습니다.";
     }
@@ -396,7 +414,7 @@ public class RoomServiceImpl implements RoomService {
         }
         Room gotRoom = room.get();
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
-            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+            throw new PermissionDenyException("해당 룸의 어드민나 관리자가 아닙니다.");
         }
         Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findById(roomEndUserBanRequest.RoomEndUserId());
         if (!toRoomEndUser.isPresent()) {
@@ -410,18 +428,18 @@ public class RoomServiceImpl implements RoomService {
             if (roomEndUser.get().getOwner().equals(true)) {
                 deleteRoomEndUser(gotToRoomEndUser);
                 gotToRoomEndUser.banUser(roomEndUserBanRequest.reason());
-                return "성공적으로 룸의 관리자가 차단되었습니다.";
+                return "성공적으로 룸의 어드민이 차단되었습니다.";
             }
-            throw new PermissionDenyException("관리자나 모더는 관리자를 추방할 수 없습니다.");
+            throw new PermissionDenyException("어드민이나 관리자는 어드민을 추방할 수 없습니다.");
         }
         if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_MODE)) {
             if (roomEndUser.get().getOwner().equals(true) ||
                     roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
                 deleteRoomEndUser(gotToRoomEndUser);
                 gotToRoomEndUser.banUser(roomEndUserBanRequest.reason());
-                return "성공적으로 룸의 모더가 차단되었습니다.";
+                return "성공적으로 룸의 관리자가 차단되었습니다.";
             }
-            throw new PermissionDenyException("모더는 모더를 추방할 수 없습니다.");
+            throw new PermissionDenyException("관리자는 관리자를 추방할 수 없습니다.");
         }
         deleteRoomEndUser(gotToRoomEndUser);
         gotToRoomEndUser.banUser(roomEndUserBanRequest.reason());
@@ -440,7 +458,7 @@ public class RoomServiceImpl implements RoomService {
         }
         Room gotRoom = room.get();
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
-            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+            throw new PermissionDenyException("해당 룸의 어드민이나 관리자가 아닙니다.");
         }
         Optional<RoomEndUser> toRoomEndUser = roomEndUserRepository.findById(roomEndUserUnbanRequest.RoomEndUserId());
         if (!toRoomEndUser.isPresent()) {
@@ -450,17 +468,17 @@ public class RoomServiceImpl implements RoomService {
         if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_ADMIN)) {
             if (roomEndUser.get().getOwner().equals(true)) {
                 gotToRoomEndUser.unbanUser(roomEndUserUnbanRequest.reason());
-                return "성공적으로 룸의 관리자가 차단 해제 되었습니다.";
+                return "성공적으로 룸의 어드민이 차단 해제 되었습니다.";
             }
-            throw new PermissionDenyException("관리자나 모더는 관리자를 차단 해제할 수 없습니다.");
+            throw new PermissionDenyException("어드민이나 관리자는 어드민을 차단 해제할 수 없습니다.");
         }
         if (gotToRoomEndUser.getRole().equals(RoomRole.ROOM_MODE)) {
             if (roomEndUser.get().getOwner().equals(true) ||
                     roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
                 gotToRoomEndUser.unbanUser(roomEndUserUnbanRequest.reason());
-                return "성공적으로 룸의 모더가 차단 해제 되었습니다.";
+                return "성공적으로 룸의 관리자가 차단 해제 되었습니다.";
             }
-            throw new PermissionDenyException("모더는 모더를 차단 해제할 수 없습니다.");
+            throw new PermissionDenyException("관리자는 관리자를 차단 해제할 수 없습니다.");
         }
         gotToRoomEndUser.unbanUser(roomEndUserUnbanRequest.reason());
         return "성공적으로 룸의 멤버가 차단 해제 되었습니다.";
@@ -492,7 +510,7 @@ public class RoomServiceImpl implements RoomService {
         }
         Room gotRoom = room.get();
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
-            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+            throw new PermissionDenyException("해당 룸의 어드민이나 관리자가 아닙니다.");
         }
         String inviteLink = "https://pyre.live/invitation/" + UUID.randomUUID().toString().substring(0, 8);
         redisUtilService.setDataExpire(inviteLink, gotRoom.getId().toString(), 60 * 60 * 24 * roomInviteLinkCreateRequest.maxDays());
@@ -512,7 +530,7 @@ public class RoomServiceImpl implements RoomService {
         }
         Room gotRoom = room.get();
         if (!roomEndUser.get().getRole().equals(RoomRole.ROOM_MODE) && !roomEndUser.get().getRole().equals(RoomRole.ROOM_ADMIN)) {
-            throw new PermissionDenyException("해당 룸의 관리자나 모더가 아닙니다.");
+            throw new PermissionDenyException("해당 룸의 어드민이나 관리자가 아닙니다.");
         }
         RoomInvitationLinkResponse roomInvitationLinkResponse = RoomInvitationLinkResponse.makeDto(gotRoom.getInviteLink(), gotRoom.getInviteExpireDate());
         return roomInvitationLinkResponse;
