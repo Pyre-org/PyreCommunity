@@ -1,12 +1,12 @@
 ## 🙌 Hello. Pyre is always with you!
-<img src="https://cdn.discordapp.com/attachments/1214849763745202176/1214850895133679616/pyre.png?ex=65fa9d10&is=65e82810&hm=0824d809c6b9297212831b1bcac723e24bf93b2199ffbcb665e84092034a133d&" alt="drawing" width="400"/>
+<img src="https://github.com/user-attachments/assets/ff7974ad-f615-4957-acbb-b2f858335062" alt="drawing" width="400"/>
 
 #### 현재 파이어는 미완성 프로젝트입니다.
 #### [Github 조직](https://github.com/Pyre-org)
 
 # PyreAuth
 ## 프로젝트 구조
-<img src="https://cdn.discordapp.com/attachments/393025698907947009/1219257755987083375/image.png?ex=660aa545&is=65f83045&hm=d83ce918befeee89b1ae8ce1c229a822dc11bac1f86d1acad5d30deafc1249dc&" alt="drawing" width="600"/>
+<img src="https://github.com/user-attachments/assets/75a37c6d-8a3d-4da0-a6e9-39717a189229" alt="drawing" width="600"/>
 
 ## 기술 스택
 - Java 21
